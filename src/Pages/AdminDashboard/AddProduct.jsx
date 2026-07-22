@@ -4,6 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Switch from "react-switch";
 import { useAuthContext } from "../../hooks/useAuthContext";
+import { uploadFile } from "../../utils/uploadFile";
 
 const AddProduct = () => {
   const navigate = useNavigate();
@@ -12,15 +13,13 @@ const AddProduct = () => {
     bannerImage: null,
     productThumbnail: null,
     galleryImages: [],
-    subCategory: "",
-    subSubCategory: "",
     category: "",
     price: "",
     priceBC: "",
     priceMC: "",
     priceFC: "",
     priceSC: "",
-    specialLines: [""], // Initialize with one input field
+    specialLines: [""],
     productCode: "",
     youtubeURL: "",
     desc: "",
@@ -36,15 +35,9 @@ const AddProduct = () => {
     galleryImages: [],
   });
   const [categories, setCategories] = useState([]);
-  const [subCategories, setSubCategories] = useState([]);
-  const [subSubCategories, setSubSubCategories] = useState([]);
-  const [subCatList, setSubCatList] = useState([]);
-  const [subSubCatList, setSubSubCatList] = useState([]);
 
   useEffect(() => {
     fetchCategories();
-    fetchSubCategories();
-    fetchSubSubCategories();
   }, []);
 
   const fetchCategories = async () => {
@@ -60,32 +53,6 @@ const AddProduct = () => {
     }
   };
 
-  const fetchSubCategories = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/subcategory/`
-      );
-      if (!response.ok) throw new Error("Failed to fetch subcategories");
-      const data = await response.json();
-      setSubCategories(data);
-    } catch (error) {
-      console.error("Error fetching subcategories:", error);
-    }
-  };
-
-  const fetchSubSubCategories = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/subsubcategory/`
-      );
-      if (!response.ok) throw new Error("Failed to fetch subcategories");
-      const data = await response.json();
-      setSubSubCategories(data);
-    } catch (error) {
-      console.error("Error fetching subcategories:", error);
-    }
-  };
-
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
     if (files) {
@@ -97,23 +64,6 @@ const AddProduct = () => {
         setPreview({ ...preview, productThumbnail: URL.createObjectURL(file) });
       }
     } else {
-      if (name === "category") {
-        let dex = subCategories.filter((cat) => cat.category === value);
-        setSubCatList(dex);
-        console.log(",dex", dex)
-        setFormData({ ...formData, [name]: value });
-      }
-      else if (name === "subCategory") {
-        let subCat = subCategories.find((sc) => sc._id === value);
-        let dex = subCat.subSubCategories;
-        let dex2 = [];
-        for (let i = 0; i < dex.length; i++) {
-          dex2.push(subSubCategories.find((ss) => ss._id === dex[i]));
-        }
-        console.log(",dextuu", dex2)
-        setSubSubCatList(dex2);
-        setFormData({ ...formData, [name]: value });
-      }
       setFormData({ ...formData, [name]: value });
     }
   };
@@ -147,19 +97,6 @@ const AddProduct = () => {
     setPreview({ ...preview, galleryImages: [...preview.galleryImages, null] });
   };
 
-  const uploadFile = async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/file/upload`,
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
-    const data = await response.json();
-    return data.filePath;
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -174,8 +111,6 @@ const AddProduct = () => {
       bannerImage: bannerImagePath,
       productThumbnail: productThumbnailPath,
       galleryImages: galleryImagePaths,
-      subSubCategory: formData.subSubCategory,
-      subCategory: formData.subCategory,
       category: formData.category,
       priceBC: formData.priceBC,
       priceMC: formData.priceMC,
@@ -209,21 +144,18 @@ const AddProduct = () => {
       );
       if (!response.ok) throw new Error("Failed to add product");
       toast.success("Product added successfully!");
-      // Reset form or redirect as needed
       setFormData({
         name: "",
         bannerImage: null,
         productThumbnail: null,
         galleryImages: [],
-        subCategory: "",
-        subSubCategory: "",
         category: "",
         price: "",
         priceBC: "",
         priceMC: "",
         priceFC: "",
         priceSC: "",
-        specialLines: [""], // Initialize with one input field
+        specialLines: [""],
         productCode: "",
         youtubeURL: "",
         desc: "",
@@ -328,102 +260,6 @@ const AddProduct = () => {
           </select>
         </div>
 
-
-        {
-          !formData.category &&
-          <div>
-            <label className="label">
-              <span className="label-text">Sub-Category</span>
-            </label>
-            <select
-              name="subCategory"
-              value={formData.subCategory}
-              onChange={handleInputChange}
-              className="select select-bordered w-full"
-              required
-            >
-              <option value="">Select a Sub-Category</option>
-              {subCategories.map((subCategory) => (
-                <option key={subCategory._id} value={subCategory._id}>
-                  {subCategory.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        }
-        {
-          formData.category &&
-          <div>
-            <label className="label">
-              <span className="label-text">Sub-Category</span>
-            </label>
-            <select
-              name="subCategory"
-              value={formData.subCategory}
-              onChange={handleInputChange}
-              className="select select-bordered w-full"
-              required
-            >
-              <option value="">Select a Sub-Category</option>
-              {subCatList?.map((subCategory) => (
-                <option key={subCategory._id} value={subCategory._id}>
-                  {subCategory.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        }
-
-
-        {
-          !formData.subCategory &&
-          <div>
-            <label className="label">
-              <span className="label-text">Sub-Sub-Category</span>
-            </label>
-            <select
-              name="subSubCategory"
-              value={formData.subSubCategory}
-              onChange={handleInputChange}
-              className="select select-bordered w-full"
-              required
-            >
-              <option value="">Select a Sub-Sub-Category</option>
-              {subSubCategories.map((subSubCategory) => (
-                <option key={subSubCategory._id} value={subSubCategory._id}>
-                  {subSubCategory.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        }
-
-        {
-          formData.subCategory &&
-          <div>
-            <label className="label">
-              <span className="label-text">Sub-Sub-Category</span>
-            </label>
-            <select
-              name="subSubCategory"
-              value={formData.subSubCategory}
-              onChange={handleInputChange}
-              className="select select-bordered w-full"
-              required
-            >
-              <option value="">Select a Sub-Sub-Category</option>
-              {subSubCatList.map((subSubCategory) => (
-                <option key={subSubCategory._id} value={subSubCategory._id}>
-                  {subSubCategory?.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        }
-
-
-
-
         <div>
           <label className="label">
             <span className="label-text">Price BC</span>
@@ -491,7 +327,6 @@ const AddProduct = () => {
           />
         </div>
 
-
         <div>
           <label className="label">
             <span className="label-text">Panic Stock</span>
@@ -512,7 +347,6 @@ const AddProduct = () => {
           </label>
           <Switch onChange={() => setFormData({ ...formData, hasOffer: (formData.hasOffer) ? false : true })} checked={formData.hasOffer} />
         </div>
-
 
         {
           formData.hasOffer &&
@@ -633,7 +467,6 @@ const AddProduct = () => {
           </button>
         </div>
 
-
         <div>
           <label className="label">
             <span className="label-text">YouTube URL</span>
@@ -659,7 +492,6 @@ const AddProduct = () => {
             className="input input-bordered w-full"
           />
         </div>
-
 
         <button type="submit" className="btn btn-primary mt-4">
           Add Product

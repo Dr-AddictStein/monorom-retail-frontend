@@ -18,7 +18,6 @@ const ProductDetails = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [addedToCart, setAddedToCart] = useState(false);
   const [category, setCategory] = useState(null);
-  const [subCategory, setSubcategory] = useState(null);
   const [products, setProducts] = useState(null);
 
   const [quantity, setQuantity] = useState(1);
@@ -101,39 +100,14 @@ const ProductDetails = () => {
     }
   };
 
-  const fetchSubCategory = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/subCategory/${product?.subCategory
-        }`
-      );
-      if (!response.ok) throw new Error("Failed to fetch subcategory");
-      const data = await response.json();
-      setSubcategory(data);
-    } catch (error) {
-      console.error("Error fetching subcategory:", error);
-    }
-  };
-
   const fetchRelatedProducts = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL
-        }/api/product/getProductsBySubCategoryId/${subCategory._id}`
+        `${import.meta.env.VITE_BACKEND_URL}/api/product/getProductsByCategoryId/${product.category}`
       );
       if (!response.ok) throw new Error("Failed to fetch related products");
       const data = await response.json();
-      let dex = [];
-      for (let i = 0; i < data.length; i++) {
-        if (data.length === 1) {
-          dex.push(data[i]);
-        }
-        else {
-          if (data[i]._id !== product._id) {
-            dex.push(data[i]);
-          }
-        }
-      }
+      const dex = data.filter((item) => item._id !== product._id);
       setProducts(dex);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -149,15 +123,9 @@ const ProductDetails = () => {
   useEffect(() => {
     if (product) {
       fetchCategory();
-      fetchSubCategory();
-    }
-  }, [product]);
-
-  useEffect(() => {
-    if (subCategory) {
       fetchRelatedProducts();
     }
-  }, [subCategory]);
+  }, [product]);
 
   const [isLoginOpen, setLoginOpen] = useState(false);
   const [isSignupOpen, setSignupOpen] = useState(false);
@@ -321,13 +289,6 @@ const ProductDetails = () => {
                 className="hover:text-blue-500 cursor-pointer"
               >
                 {category?.name}
-              </Link>{" "}
-              &gt;{" "}
-              <Link
-                to={`/subcategory/${subCategory?._id}`}
-                className="hover:text-blue-500 cursor-pointer"
-              >
-                {subCategory?.name}
               </Link>
             </p>
             <h3 className="text-3xl font-bold text-center">{product?.name}</h3>

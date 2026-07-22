@@ -8,8 +8,6 @@ const ViewProduct = () => {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [categories, setCategories] = useState([]);
-  const [subCategories, setSubCategories] = useState([]);
-  const [subSubCategories, setSubSubCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,22 +30,6 @@ const ViewProduct = () => {
       const categoriesData = await categoriesResponse.json();
       setCategories(categoriesData);
 
-      const subCategoriesResponse = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/subcategory/`
-      );
-      if (!subCategoriesResponse.ok)
-        throw new Error("Failed to fetch subcategories");
-      const subCategoriesData = await subCategoriesResponse.json();
-      setSubCategories(subCategoriesData);
-      
-      const subSubCategoriesResponse = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/subsubcategory/`
-      );
-      if (!subSubCategoriesResponse.ok)
-        throw new Error("Failed to fetch subsubcategories");
-      const subSubCategoriesData = await subSubCategoriesResponse.json();
-      setSubSubCategories(subSubCategoriesData);
-
       setLoading(false);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -65,15 +47,9 @@ const ViewProduct = () => {
     return <div className="text-center">Product not found.</div>;
   }
 
-  // Find category and subcategory names by ID
+  // Find category name by ID
   const categoryName =
     categories.find((cat) => cat._id === product.category)?.name || "N/A";
-  const subCategoryName =
-    subCategories.find((subCat) => subCat._id === product.subCategory)?.name ||
-    "N/A";
-  const subSubCategoryName =
-    subSubCategories.find((subSubCat) => subSubCat._id === product.subSubCategory)?.name ||
-    "N/A";
 
 
 
@@ -135,12 +111,6 @@ const ViewProduct = () => {
             </p>
             <p className="my-6">
               <strong>Category:</strong> {categoryName}
-            </p>
-            <p className="my-6">
-              <strong>SubCategory:</strong> {subCategoryName}
-            </p>
-            <p className="my-6">
-              <strong>SubSubCategory:</strong> {subSubCategoryName}
             </p>
             <p className="my-6">
               <strong>Price BC:</strong> tk {product.priceBC.toFixed(2)}/-

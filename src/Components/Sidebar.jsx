@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaHome, FaShoppingCart, FaUser, FaCodeBranch } from "react-icons/fa";
+import { FaHome, FaShoppingCart, FaUser } from "react-icons/fa";
 import { ImProfile } from "react-icons/im";
 import { IoCheckmarkDoneCircleOutline, IoHome } from "react-icons/io5";
 import {
@@ -10,7 +10,6 @@ import {
   MdOutlineLogout,
   MdOutlineNotifications,
   MdOutlineProductionQuantityLimits,
-  MdOutlineSubtitles,
   MdTrendingDown,
 } from "react-icons/md";
 import { Link, useLocation } from "react-router-dom";
@@ -108,26 +107,6 @@ const Sidebar = ({ onClose }) => {
               }`}
           >
             <MdCategory /> Categories
-          </Link>
-          <Link
-            to="/dashboard/admin/subCategory"
-            onClick={handleLinkClick}
-            className={`rounded-lg px-1 py-1 flex gap-2 items-center dashboard-link ${location.pathname === "/dashboard/admin/subCategory"
-                ? "bg-white text-black"
-                : ""
-              }`}
-          >
-            <MdOutlineSubtitles /> Sub-categories
-          </Link>
-          <Link
-            to="/dashboard/admin/subSubCategory"
-            onClick={handleLinkClick}
-            className={`rounded-lg px-1 py-1 flex gap-2 items-center dashboard-link ${location.pathname === "/dashboard/admin/subSubCategory"
-                ? "bg-white text-black"
-                : ""
-              }`}
-          >
-            <FaCodeBranch /> Sub-Sub-categories
           </Link>
           <Link
             to="/dashboard/admin/product"

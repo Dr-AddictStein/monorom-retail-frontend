@@ -66,6 +66,21 @@ const Home = () => {
   const carouselRefs = useRef([]);
   const [currentSlide, setCurrentSlide] = useState({});
 
+  // Ref + scroll handler for the "Our Top Categories" carousel
+  const topCategoriesRef = useRef(null);
+
+  const scrollTopCategories = (direction) => {
+    if (topCategoriesRef.current) {
+      const track = topCategoriesRef.current;
+      // Scroll by roughly one card (a third of the visible width) plus the gap
+      const scrollAmount = track.clientWidth / 3 + 24;
+      track.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
   // Scroll to section function
   const handleScroll = (type) => {
     const element = document.getElementById(type);
@@ -101,7 +116,7 @@ const Home = () => {
       carouselRefs.current[index].scrollLeft += scrollAmount;
       
       // Update current slide indicator
-      const maxSlides = allData[index]?.subCategoriesData?.length || 0;
+      const maxSlides = allData[index]?.productsData?.length || 0;
       const newSlide = Math.min(maxSlides - 1, (currentSlide[index] || 0) + 1);
       setCurrentSlide(prev => ({ ...prev, [index]: newSlide }));
     }
@@ -118,16 +133,16 @@ const Home = () => {
   };
 
   const renderCarousel = (item, index) => {
-    const subCategories = allData[index]?.subCategoriesData || [];
-    const maxVisibleSlides = Math.ceil(subCategories.length / (window.innerWidth >= 1024 ? 3 : window.innerWidth >= 768 ? 2 : 1));
+    const products = allData[index]?.productsData || [];
+    const maxVisibleSlides = Math.ceil(products.length / (window.innerWidth >= 1024 ? 3 : window.innerWidth >= 768 ? 2 : 1));
     
     return (
-      <div key={index} className="w-full max-w-7xl mx-auto pt-16 md:pt-32 px-4 md:px-6" id={item?._doc?.name}>
+      <div key={index} className="w-full max-w-7xl mx-auto pt-16 md:pt-32 px-4 md:px-6" id={item?.name}>
         {/* Category Title */}
         <div className="pb-8 md:pb-12">
-          <Link to={`category/${item?._doc?._id}`} className="group">
+          <Link to={`/category/${item?._id}`} className="group">
             <h3 className="text-2xl md:text-4xl lg:text-5xl font-bold text-center text-gray-800 transition-colors duration-300 group-hover:text-blue-600">
-              {allData[index]?._doc?.name}
+              {allData[index]?.name}
             </h3>
             <div className="w-24 h-1 bg-blue-500 mx-auto mt-3 rounded-full transform transition-all duration-300 group-hover:w-32"></div>
           </Link>
@@ -158,39 +173,32 @@ const Home = () => {
               ref={(el) => (carouselRefs.current[index] = el)}
               className="flex space-x-4 md:space-x-6 overflow-x-auto scrollbar-hide carousel-scroll snap-x"
             >
-              {subCategories.map((subCat, itemIndex) => (
-                <Link key={itemIndex} to={`/subCategory/${subCat?._id}`} className="snap-start">
+              {products.map((product, itemIndex) => (
+                <Link key={itemIndex} to={`/productDetails/${product?._id}`} className="snap-start">
                   <div className="relative flex-shrink-0 w-[260px] md:w-[280px] lg:w-[320px] group overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                    {/* Image */}
                     <div className="overflow-hidden rounded-xl">
                       <img
                         className="w-full h-[300px] md:h-[350px] lg:h-[400px] object-cover transition-transform duration-700 group-hover:scale-110"
-                        src={subCat?.subCategoryThumbnail}
-                        alt={subCat?.name}
+                        src={product?.productThumbnail}
+                        alt={product?.name}
                         loading="lazy"
                       />
                     </div>
-                    
-                    {/* Gradient Overlay */}
                     <div className="gradient-overlay absolute inset-0 rounded-xl"></div>
-                    
-                    {/* Hover Overlay */}
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 transition-all duration-400 group-hover:opacity-100 rounded-xl">
                       <div className="text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-400">
                         <h3 className="text-white text-xl md:text-2xl font-bold mb-3 px-4">
-                          {subCat?.name}
+                          {product?.name}
                         </h3>
                         <div className="px-6 py-3 border-2 border-white text-white font-semibold rounded-full hover:bg-white hover:text-black transition-all duration-300 text-sm md:text-base">
-                          Explore Collection
+                          View Product
                         </div>
                       </div>
                     </div>
-                    
-                    {/* Name Badge - Always Visible */}
                     <div className="absolute bottom-4 left-4 right-4 transition-opacity duration-400 group-hover:opacity-0">
                       <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg">
                         <h3 className="text-gray-800 text-lg md:text-xl font-semibold text-center truncate">
-                          {subCat?.name}
+                          {product?.name}
                         </h3>
                       </div>
                     </div>
@@ -201,7 +209,7 @@ const Home = () => {
           </div>
 
           {/* Dot Indicators */}
-          {subCategories.length > 3 && (
+          {products.length > 3 && (
             <div className="flex justify-center mt-6 space-x-2">
               {Array.from({ length: Math.min(maxVisibleSlides, 8) }).map((_, dotIndex) => (
                 <button
@@ -242,38 +250,59 @@ const Home = () => {
         <h1 className="text-center font-sans font-semibold text-3xl md:text-6xl pb-10">
           Our Top Categories
         </h1>
-        <div className="flex flex-col md:flex-row lg:flex-row">
-          {topData.map((item, index) => (
+        <div className="relative max-w-[1700px] mx-auto px-4 md:px-8">
+          {/* Left Arrow */}
+          <button
+            onClick={() => scrollTopCategories("left")}
+            className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-[60] w-11 h-11 md:w-14 md:h-14 bg-white/70 backdrop-blur-md border border-white/60 text-gray-700 shadow-md hover:shadow-xl hover:bg-white hover:scale-110 rounded-full flex items-center justify-center transition-all duration-300 ease-out"
+            aria-label="Previous categories"
+          >
+            <FaChevronLeft className="text-base md:text-xl" />
+          </button>
+
+          {/* Right Arrow */}
+          <button
+            onClick={() => scrollTopCategories("right")}
+            className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-[60] w-11 h-11 md:w-14 md:h-14 bg-white/70 backdrop-blur-md border border-white/60 text-gray-700 shadow-md hover:shadow-xl hover:bg-white hover:scale-110 rounded-full flex items-center justify-center transition-all duration-300 ease-out"
+            aria-label="Next categories"
+          >
+            <FaChevronRight className="text-base md:text-xl" />
+          </button>
+
+          {/* Scrollable Track */}
+          <div
+            ref={topCategoriesRef}
+            className="flex gap-6 overflow-x-auto scrollbar-hide carousel-scroll snap-x px-1"
+          >
+            {allData.map((item, index) => (
             <div
               key={index}
-              className="relative flex-1 h-96 overflow-hidden transform transition-all duration-500 hover:flex-[2] group"
+              className="snap-start relative flex-shrink-0 w-[calc(100%-1rem)] md:w-[calc((100%-1.5rem)/2)] lg:w-[calc((100%-3rem)/3)] lg:hover:w-[calc((100%-3rem)/3+90px)] h-[420px] overflow-hidden rounded-2xl transform transition-all duration-500 group"
             >
               <img
-                src={item._doc.categoryThumbnail}
-                alt={item._doc.name}
+                src={item.categoryThumbnail}
+                alt={item.name}
                 className="w-full h-full object-cover"
               />
-              {/* Hover Section */}
               <div className="absolute inset-0 z-50 bg-black bg-opacity-50 flex flex-col justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">
                 <h3 className="text-white text-2xl font-bold my-6">
-                  {item._doc.name}
+                  {item.name}
                 </h3>
-                {/* <p className="text-white text-center mb-4">{item.description}</p> */}
                 <button
                   className="px-4 py-2 border border-white text-white hover:bg-white hover:text-black transition-colors duration-300"
-                  onClick={() => handleScroll(item._doc.name)}
+                  onClick={() => handleScroll(item.name)}
                 >
                   See Category
                 </button>
               </div>
-              {/* Non-Hover Section */}
               <div className="absolute inset-0 flex flex-col justify-center items-center opacity-100 transition-opacity duration-500 group-hover:opacity-0">
                 <h3 className="text-white bg-black bg-opacity-70 text-3xl font-bold w-56 text-center py-2">
-                  {item._doc.name}
+                  {item.name}
                 </h3>
               </div>
             </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 

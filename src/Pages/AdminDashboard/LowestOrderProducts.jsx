@@ -7,8 +7,6 @@ import { useAuthContext } from "../../hooks/useAuthContext";
 const LowestOrderProducts = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [subCategories, setSubCategories] = useState([]);
-  const [subSubCategories, setSubSubCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [bulkEditMode, setBulkEditMode] = useState(false);
@@ -38,43 +36,19 @@ const LowestOrderProducts = () => {
     }
   }, [isAdmin, isSCView]);
 
-  const fetchSubCategory = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/subCategory`
-      );
-      if (!response.ok) throw new Error("Failed to fetch SubCategory");
-      const data = await response.json();
-      setSubCategories(data);
-    } catch (error) {
-      console.error("Error fetching subcategory:", error);
-    }
-  };
   const fetchCategory = async () => {
     try {
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/category`
       );
-      if (!response.ok) throw new Error("Failed to fetch SubCategory");
+      if (!response.ok) throw new Error("Failed to fetch categories");
       const data = await response.json();
       setCategories(data);
     } catch (error) {
-      console.error("Error fetching subcategory:", error);
+      console.error("Error fetching categories:", error);
     }
   };
 
-  const fetchSubSubCategories = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/subsubCategory`
-      );
-      if (!response.ok) throw new Error("Failed to fetch subSubCategories");
-      const data = await response.json();
-      setSubSubCategories(data);
-    } catch (error) {
-      console.error("Error fetching subSubCategories:", error);
-    }
-  };
 
   const fetchProducts = async () => {
     try {
@@ -179,20 +153,9 @@ const LowestOrderProducts = () => {
     return category ? category.name : "N/A";
   };
 
-  const getSubCategoryName = (id) => {
-    const subCategory = subCategories.find((subCat) => subCat._id === id);
-    return subCategory ? subCategory.name : "N/A";
-  };
-
-  const getSubSubCategoryName = (id) => {
-    const subSubCategory = subSubCategories.find((subSubCat) => subSubCat._id === id);
-    return subSubCategory ? subSubCategory.name : "N/A";
-  };
 
   useEffect(() => {
-    fetchSubCategory();
     fetchCategory();
-    fetchSubSubCategories();
     fetchProducts();
   }, []);
 
@@ -318,8 +281,6 @@ const LowestOrderProducts = () => {
                 )}
                 <th className="border border-gray-700 px-2 py-2 text-left min-w-[200px]">Name</th>
                 <th className="border border-gray-700 px-2 py-2 text-center min-w-[100px]">Category</th>
-                <th className="border border-gray-700 px-2 py-2 text-center min-w-[120px]">SubCategory</th>
-                <th className="border border-gray-700 px-2 py-2 text-center min-w-[140px]">SubSubCategory</th>
                 <th className="border border-gray-700 px-2 py-2 text-center min-w-[120px]">Special Lines</th>
                 <th className="border border-gray-700 px-2 py-2 text-center min-w-[120px]">Price</th>
                 <th className="border border-gray-700 px-2 py-2 text-center min-w-[80px]">Stock</th>
@@ -350,16 +311,6 @@ const LowestOrderProducts = () => {
                   <td className="border border-gray-700 px-2 py-2 text-center">
                     <div className="max-w-[100px] truncate" title={getCategoryName(product.category)}>
                       {getCategoryName(product.category)}
-                    </div>
-                  </td>
-                  <td className="border border-gray-700 px-2 py-2 text-center">
-                    <div className="max-w-[120px] truncate" title={getSubCategoryName(product.subCategory)}>
-                      {getSubCategoryName(product.subCategory)}
-                    </div>
-                  </td>
-                  <td className="border border-gray-700 px-2 py-2 text-center">
-                    <div className="max-w-[140px] truncate" title={getSubSubCategoryName(product.subSubCategory)}>
-                      {getSubSubCategoryName(product.subSubCategory)}
                     </div>
                   </td>
                   <td className="border border-gray-700 px-2 py-2 text-center">

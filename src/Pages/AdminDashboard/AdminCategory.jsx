@@ -4,11 +4,11 @@ import { RiDeleteBin6Line } from "react-icons/ri";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthContext } from "../../hooks/useAuthContext";
+import { uploadFile } from "../../utils/uploadFile";
 import { Link } from "react-router-dom";
 
 const AdminCategory = () => {
   const [categories, setCategories] = useState([]);
-  const [subCategories, setSubCategories] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
     slogan: "",
@@ -23,7 +23,6 @@ const AdminCategory = () => {
 
   useEffect(() => {
     fetchCategories();
-    fetchSubCategories();
   }, []);
 
   const fetchCategories = async () => {
@@ -39,18 +38,6 @@ const AdminCategory = () => {
     }
   };
 
-  const fetchSubCategories = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/subcategory/`
-      );
-      if (!response.ok) throw new Error("Failed to fetch subcategories");
-      const data = await response.json();
-      setSubCategories(data);
-    } catch (error) {
-      console.error("Error fetching subcategories:", error);
-    }
-  };
 
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
@@ -61,20 +48,6 @@ const AdminCategory = () => {
     } else {
       setFormData({ ...formData, [name]: value });
     }
-  };
-
-  const uploadFile = async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/file/upload`,
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
-    const data = await response.json();
-    return data.filePath;
   };
 
   const handleSubmit = async (e) => {
@@ -350,7 +323,7 @@ const AdminCategory = () => {
                 Category Name
               </th>
               <th className="border border-gray-600 text-center">
-                SubCategories
+                Category Slogan
               </th>
               <th className="border border-gray-600 text-center">Action</th>
             </tr>
@@ -368,22 +341,7 @@ const AdminCategory = () => {
                   {category.name}
                 </td>
                 <td className="border border-gray-600 text-center">
-                  <ul className="list-disc list-inside">
-                    {category.subCategories.map(
-                      (subCategoryId, subCategoryIndex) => {
-                        const subCategory = subCategories.find(
-                          (sub) => sub._id === subCategoryId
-                        );
-                        return (
-                          <li key={subCategoryIndex} className="my-4">
-                            {subCategory
-                              ? subCategory.name
-                              : "Unknown Subcategory"}
-                          </li>
-                        );
-                      }
-                    )}
-                  </ul>
+                  {category.slogan || "—"}
                 </td>
                 <td className="border-gray-600 border-b flex-col justify-center h-full">
                   <div className="flex justify-center gap-2">

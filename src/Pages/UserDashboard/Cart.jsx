@@ -53,7 +53,6 @@ const Table = ({ data, rowsPerPage, onDelete, setIsModalOpen }) => {
                 <th className="p-4 text-center">Image</th>
                 <th className="p-4 text-center">Name</th>
                 <th className="p-4 text-center">Category</th>
-                <th className="p-4 text-center">Sub Category</th>
                 <th className="p-4 text-center">Price</th>
                 <th className="p-4 text-center">Quantity</th>
                 <th className="p-4 text-center">Total Price</th>
@@ -73,7 +72,6 @@ const Table = ({ data, rowsPerPage, onDelete, setIsModalOpen }) => {
                   </td>
                   <td className="p-4 text-center">{item.name}</td>
                   <td className="p-4 text-center">{item.category}</td>
-                  <td className="p-4 text-center">{item.subCategory}</td>
                   <td className="p-4 text-center">tk {item.price.toFixed(2)}/-</td>
                   <td className="p-4 text-center">x{item.qty}</td>
                   <td className="p-4 text-center">tk {item.totalPrice.toFixed(2)}/-</td>

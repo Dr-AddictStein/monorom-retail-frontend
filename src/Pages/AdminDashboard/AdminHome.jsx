@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthContext } from "../../hooks/useAuthContext";
+import { uploadFile } from "../../utils/uploadFile";
 
 const AdminHome = () => {
   const [logo, setLogo] = useState("");
@@ -28,21 +29,6 @@ const AdminHome = () => {
     };
     fetchSiteData();
   }, []);
-
-  // Image upload function
-  const uploadFile = async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/file/upload`,
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
-    const data = await response.json();
-    return data.filePath;
-  };
 
   // Update functions for each field with toast notifications
   const updateLogo = async () => {

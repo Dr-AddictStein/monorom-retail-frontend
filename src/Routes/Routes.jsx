@@ -1,14 +1,12 @@
 import { createBrowserRouter } from "react-router-dom";
 import Main from "../Layout/Main";
 import Home from "../Pages/Home";
-import SubCategory from "../Pages/SubCategory";
 import ProductDetails from "../Pages/ProductDetails";
 import DashbaordPage from "../Components/DashbaordPage";
 import AddProduct from "../Pages/AdminDashboard/AddProduct";
 import UserHome from "../Pages/UserDashboard/UserHome";
 import Category from "../Pages/Category";
 import AdminCategory from "../Pages/AdminDashboard/AdminCategory";
-import AdminSubCategory from "../Pages/AdminDashboard/AdminSubCategory";
 import AdminProduct from "../Pages/AdminDashboard/AdminProduct";
 import AdminUsers from "../Pages/AdminDashboard/AdminUsers";
 import ViewProduct from "../Pages/AdminDashboard/ViewProduct";
@@ -24,7 +22,6 @@ import OrderHistory from "../Pages/UserDashboard/OrderHistory";
 import UserOrderDetails from "../Pages/UserDashboard/UserOrderDetails";
 import AdminHome from "../Pages/AdminDashboard/AdminHome";
 import AllProducts from "../Pages/AllProducts";
-import AdminSubSubCategory from "../Pages/AdminDashboard/AdminSubSubCategory";
 import AdminRestock from "../Pages/AdminDashboard/AdminRestock";
 import AdminNotificationSender from "../Pages/AdminDashboard/AdminNotificationSender";
 import LowestOrderProducts from "../Pages/AdminDashboard/LowestOrderProducts";
@@ -41,10 +38,6 @@ export const router = createBrowserRouter([
             {
                 path: "/category/:id",
                 element: <Category />,
-            },
-            {
-                path: "/subCategory/:id",
-                element: <SubCategory />,
             },
             {
                 path: "/productDetails/:id",
@@ -77,14 +70,6 @@ export const router = createBrowserRouter([
             {
                 path: '/dashboard/admin/category',
                 element: <AdminCategory />
-            },
-            {
-                path: '/dashboard/admin/subCategory',
-                element: <AdminSubCategory />
-            },
-            {
-                path: '/dashboard/admin/subSubCategory',
-                element: <AdminSubSubCategory />
             },
             {
                 path: '/dashboard/admin/product',

@@ -12,14 +12,10 @@ const Navbar = () => {
   const [mainUser, setMainUser] = useState(null);
   const [logo, setLogo] = useState("");
   const [categories, setCategories] = useState([]);
-  const [subCategoriesMap, setSubCategoriesMap] = useState({});
   const [showCategories, setShowCategories] = useState(false);
-  const [activeCategory, setActiveCategory] = useState(null);
   const categoryMenuRef = useRef(null);
   const categoryButtonRef = useRef(null);
 
-
-  // Fetch current site data
   const fetchSiteData = async () => {
     try {
       const response = await fetch(
@@ -32,7 +28,6 @@ const Navbar = () => {
     }
   };
 
-  // Fetch user data
   const fetchUserData = async () => {
     try {
       const response = await fetch(
@@ -45,30 +40,18 @@ const Navbar = () => {
     }
   };
 
-  // Fetch categories and subcategories data
-  const fetchCategoriesAndSubCategories = async () => {
+  const fetchCategories = async () => {
     try {
       const categoryResponse = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/category/`
       );
       const categoriesData = await categoryResponse.json();
       setCategories(categoriesData);
-
-      const subCategoryResponse = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/subCategory/`
-      );
-      const subCategoriesData = await subCategoryResponse.json();
-      const subCategoryMap = {};
-      subCategoriesData.forEach((subCategory) => {
-        subCategoryMap[subCategory._id] = subCategory.name;
-      });
-      setSubCategoriesMap(subCategoryMap);
     } catch (error) {
       console.error("Error fetching category data:", error);
     }
   };
 
-  // UseEffect to fetch data on mount
   useEffect(() => {
     if (user?.user?._id) {
       fetchUserData();
@@ -77,8 +60,9 @@ const Navbar = () => {
 
   useEffect(() => {
     fetchSiteData();
-    fetchCategoriesAndSubCategories();
-  }, [])
+    fetchCategories();
+  }, []);
+
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   useEffect(() => {
@@ -91,7 +75,6 @@ const Navbar = () => {
     };
   }, [location]);
 
-  // Handle clicks outside to close the menus
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -101,7 +84,6 @@ const Navbar = () => {
         !categoryButtonRef.current.contains(event.target)
       ) {
         setShowCategories(false);
-        setActiveCategory(null);
       }
     };
 
@@ -113,14 +95,6 @@ const Navbar = () => {
 
   const toggleCategories = () => {
     setShowCategories((prev) => !prev);
-  };
-
-  console.log(showCategories);
-  console.log(activeCategory);
-
-
-  const toggleSubCategories = (categoryId) => {
-    setActiveCategory((prev) => (prev === categoryId ? null : categoryId));
   };
 
   const menu = (
@@ -144,44 +118,23 @@ const Navbar = () => {
         </Link>
       </li>
 
-
       <li className="relative" ref={categoryMenuRef}>
         <button ref={categoryButtonRef} onClick={toggleCategories}>
           Products by Category
         </button>
         {showCategories && (
           <ul
-            className={`absolute left-0 mt-2 bg-white text-black rounded-md shadow-lg p-4 md:w-64 h-[600px] ${(activeCategory !== null) ? "overflow-y-clip" : "overflow-y-auto"}  z-50`}
+            className="absolute left-0 mt-2 bg-white text-black rounded-md shadow-lg p-4 md:w-64 max-h-[600px] overflow-y-auto z-50"
             style={{ scrollbarWidth: "thin", scrollbarColor: "#888 transparent" }}
           >
             {categories.map((category) => (
-              <li
-                key={category._id}
-                className="relative py-2 px-4 hover:bg-gray-100"
-              >
-                <button onClick={() => toggleSubCategories(category._id)}>
+              <li key={category._id} className="py-2 px-4 hover:bg-gray-100">
+                <Link
+                  to={`/category/${category._id}`}
+                  onClick={() => setShowCategories(false)}
+                >
                   {category.name}
-                </button>
-                {activeCategory === category._id && category.subCategories.length > 0 && (
-                  <ul
-                    className="absolute left-full top-0 bg-white text-black rounded-md shadow-lg p-4 md:w-48 max-h-96 overflow-y-auto z-50"
-                    style={{ scrollbarWidth: "thin", scrollbarColor: "#888 transparent" }}
-                  >
-                    {category.subCategories.map((subCategoryId) => (
-                      <li key={subCategoryId} className="py-1 px-2 hover:bg-gray-200">
-                        <Link
-                          to={`/subCategory/${subCategoryId}`}
-                          onClick={() => {
-                            setShowCategories(false);
-                            setActiveCategory(null);
-                          }}
-                        >
-                          {subCategoriesMap[subCategoryId]}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                </Link>
               </li>
             ))}
           </ul>
@@ -231,7 +184,6 @@ const Navbar = () => {
           </ul>
         </div>
         <div className="navbar-end">
-          {/* <a className="btn">Button</a> */}
           <div className="flex  items-center gap-3">
             {user ? (
               <div className={`text-white flex items-center gap-5 rounded-full`}>

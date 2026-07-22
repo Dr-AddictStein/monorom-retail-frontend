@@ -4,6 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Switch from "react-switch";
 import { useAuthContext } from "../../hooks/useAuthContext";
+import { uploadFile } from "../../utils/uploadFile";
 
 const EditProduct = () => {
   const { id } = useParams();
@@ -14,8 +15,6 @@ const EditProduct = () => {
     bannerImage: null,
     productThumbnail: null,
     galleryImages: [],
-    subCategory: "",
-    subSubCategory: "",
     category: "",
     price: "",
     priceBC: "",
@@ -38,13 +37,9 @@ const EditProduct = () => {
     galleryImages: [],
   });
   const [categories, setCategories] = useState([]);
-  const [subCategories, setSubCategories] = useState([]);
-  const [subSubCategories, setSubSubCategories] = useState([]);
 
   useEffect(() => {
     fetchCategories();
-    fetchSubCategories();
-    fetchSubSubCategories();
     fetchProduct();
   }, []);
 
@@ -61,31 +56,6 @@ const EditProduct = () => {
     }
   };
 
-  const fetchSubCategories = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/subcategory/`
-      );
-      if (!response.ok) throw new Error("Failed to fetch subcategories");
-      const data = await response.json();
-      setSubCategories(data);
-    } catch (error) {
-      console.error("Error fetching subcategories:", error);
-    }
-  };
-  
-  const fetchSubSubCategories = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/subsubcategory/`
-      );
-      if (!response.ok) throw new Error("Failed to fetch subcategories");
-      const data = await response.json();
-      setSubSubCategories(data);
-    } catch (error) {
-      console.error("Error fetching subcategories:", error);
-    }
-  };
 
   const fetchProduct = async () => {
     try {
@@ -179,9 +149,7 @@ const EditProduct = () => {
       name: formData.name,
       bannerImage: bannerImagePath,
       productThumbnail: productThumbnailPath,
-      galleryImages: galleryImagePaths.filter((path) => path !== null), // Only keep non-null paths
-      subCategory: formData.subCategory,
-      subSubCategory: formData.subSubCategory,
+      galleryImages: galleryImagePaths.filter((path) => path !== null),
       category: formData.category,
       price: formData.price,
       priceBC: formData.priceBC,
@@ -220,20 +188,6 @@ const EditProduct = () => {
 
     setFormData({ ...formData, galleryImages: newGalleryImages });
     setPreview({ ...preview, galleryImages: newPreview });
-  };
-
-  const uploadFile = async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/file/upload`,
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
-    const data = await response.json();
-    return data.filePath;
   };
 
   const updateProduct = async (data) => {
@@ -334,47 +288,6 @@ const EditProduct = () => {
             {categories.map((category) => (
               <option key={category._id} value={category._id}>
                 {category.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="label">
-            <span className="label-text">SubCategory</span>
-          </label>
-          <select
-            name="subCategory"
-            value={formData.subCategory}
-            onChange={handleInputChange}
-            className="select select-bordered w-full"
-            required
-          >
-            <option value="">Select a SubCategory</option>
-            {subCategories.map((subCategory) => (
-              <option key={subCategory._id} value={subCategory._id}>
-                {subCategory.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        
-        
-        <div>
-          <label className="label">
-            <span className="label-text">SubSubCategory</span>
-          </label>
-          <select
-            name="subSubCategory"
-            value={formData.subSubCategory}
-            onChange={handleInputChange}
-            className="select select-bordered w-full"
-            required
-          >
-            <option value="">Select a SubSubCategory</option>
-            {subSubCategories.map((subSubCategory) => (
-              <option key={subSubCategory._id} value={subSubCategory._id}>
-                {subSubCategory.name}
               </option>
             ))}
           </select>

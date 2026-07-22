@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthContext } from "../../hooks/useAuthContext";
+import { uploadFile } from "../../utils/uploadFile";
 import { Link } from "react-router-dom";
 
 const Profile = () => {
@@ -22,19 +23,6 @@ const Profile = () => {
   const [imageFile, setImageFile] = useState(null);
 
   // Function to upload the file and return the file path
-  const uploadFile = async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/file/upload`,
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
-    const data = await response.json();
-    return data.filePath;
-  };
 
   const fetchUserData = async () => {
     try {
