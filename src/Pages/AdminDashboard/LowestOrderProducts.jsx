@@ -1,0 +1,505 @@
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useAuthContext } from "../../hooks/useAuthContext";
+
+const LowestOrderProducts = () => {
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
+  const [subSubCategories, setSubSubCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [bulkEditMode, setBulkEditMode] = useState(false);
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+
+  const [newPriceBC, setNewPriceBC] = useState("");
+  const [newPriceMC, setNewPriceMC] = useState("");
+  const [newPriceSC, setNewPriceSC] = useState("");
+  const [newPriceFC, setNewPriceFC] = useState("");
+  const [newStock, setNewStock] = useState("");
+
+  const { user } = useAuthContext();
+
+  // Check if user has admin role
+  const isAdmin = user?.user?.role === "admin";
+  // Check if user has SC view access
+  const isSCView = user?.user?.userView === "SC";
+
+  // Redirect if user doesn't have proper access
+  useEffect(() => {
+    if (!isAdmin && !isSCView) {
+      toast.error("You don't have permission to access this page");
+      // You might want to redirect to unauthorized page or home
+    }
+  }, [isAdmin, isSCView]);
+
+  const fetchSubCategory = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/subCategory`
+      );
+      if (!response.ok) throw new Error("Failed to fetch SubCategory");
+      const data = await response.json();
+      setSubCategories(data);
+    } catch (error) {
+      console.error("Error fetching subcategory:", error);
+    }
+  };
+  const fetchCategory = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/category`
+      );
+      if (!response.ok) throw new Error("Failed to fetch SubCategory");
+      const data = await response.json();
+      setCategories(data);
+    } catch (error) {
+      console.error("Error fetching subcategory:", error);
+    }
+  };
+
+  const fetchSubSubCategories = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/subsubCategory`
+      );
+      if (!response.ok) throw new Error("Failed to fetch subSubCategories");
+      const data = await response.json();
+      setSubSubCategories(data);
+    } catch (error) {
+      console.error("Error fetching subSubCategories:", error);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/product/`
+      );
+      if (!response.ok) throw new Error("Failed to fetch products");
+      const data = await response.json();
+      // Sort products by order count (lowest first)
+      const sortedProducts = data.sort((a, b) => (a.orderCount || 0) - (b.orderCount || 0));
+      setProducts(sortedProducts);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      toast.error("Error fetching products. Please try again later.");
+      setLoading(false);
+    }
+  };
+
+  const handleBulkUpdate = async () => {
+    if (!newPriceBC || !newPriceMC || !newPriceSC || !newPriceFC || !newStock) {
+      toast.error("Please provide all price and stock values.");
+      return;
+    }
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/product/bulkUpdate`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            productIds: selectedProducts,
+            priceBC: parseFloat(newPriceBC),
+            priceMC: parseFloat(newPriceMC),
+            priceSC: parseFloat(newPriceSC),
+            priceFC: parseFloat(newPriceFC),
+            stock: parseInt(newStock, 10),
+          }),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to update products");
+
+      fetchProducts();
+      toast.success("Products updated successfully!");
+      toggleBulkEditMode();
+    } catch (error) {
+      console.error("Error updating products:", error);
+      toast.error("Error updating products. Please try again.");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/product/${id}`,
+          {
+            method: "DELETE",
+          }
+        );
+        if (!response.ok) throw new Error("Failed to delete product");
+        setProducts(products.filter((product) => product._id !== id));
+        toast.success("Product deleted successfully!");
+      } catch (error) {
+        console.error("Error deleting product:", error);
+        toast.error("Error deleting product. Please try again.");
+      }
+    }
+  };
+
+  const toggleBulkEditMode = () => {
+    setBulkEditMode(!bulkEditMode);
+    setSelectedProducts([]);
+  };
+
+  const handleCheckboxChange = (id) => {
+    setSelectedProducts((prevSelected) =>
+      prevSelected.includes(id)
+        ? prevSelected.filter((productId) => productId !== id)
+        : [...prevSelected, id]
+    );
+  };
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const paginate = (products) => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return products.slice(startIndex, startIndex + itemsPerPage);
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const getCategoryName = (id) => {
+    const category = categories.find((cat) => cat._id === id);
+    return category ? category.name : "N/A";
+  };
+
+  const getSubCategoryName = (id) => {
+    const subCategory = subCategories.find((subCat) => subCat._id === id);
+    return subCategory ? subCategory.name : "N/A";
+  };
+
+  const getSubSubCategoryName = (id) => {
+    const subSubCategory = subSubCategories.find((subSubCat) => subSubCat._id === id);
+    return subSubCategory ? subSubCategory.name : "N/A";
+  };
+
+  useEffect(() => {
+    fetchSubCategory();
+    fetchCategory();
+    fetchSubSubCategories();
+    fetchProducts();
+  }, []);
+
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const displayedProducts = paginate(filteredProducts);
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
+  const getPaginationRange = () => {
+    const totalButtons = 7; // 5 next pages + 2 previous pages
+    const halfRange = Math.floor(totalButtons / 2);
+    const startPage = Math.max(1, currentPage - halfRange);
+    const endPage = Math.min(totalPages, startPage + totalButtons - 1);
+
+    let range = [];
+    for (let i = startPage; i <= endPage; i++) {
+      range.push(i);
+    }
+    return range;
+  };
+
+  // Don't render if user doesn't have access
+  if (!isAdmin && !isSCView) {
+    return (
+      <div className="p-4">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold mb-4 text-red-600">Access Denied</h2>
+          <p>You don't have permission to access this page.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4">
+      <ToastContainer />
+      <h2 className="text-2xl font-semibold mb-8 text-center">Lowest Order Products</h2>
+
+      <div className="mb-4 flex flex-col md:flex-row gap-4 items-center">
+        <input
+          type="text"
+          placeholder="Search by product name"
+          value={searchTerm}
+          onChange={handleSearch}
+          className="input input-bordered w-full md:w-1/3"
+        />
+
+        {isAdmin && bulkEditMode && (
+          <div className="w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 mb-4">
+              <input
+                type="number"
+                placeholder="Price BC"
+                value={newPriceBC}
+                onChange={(e) => setNewPriceBC(e.target.value)}
+                className="input input-bordered input-sm"
+              />
+              <input
+                type="number"
+                placeholder="Price MC"
+                value={newPriceMC}
+                onChange={(e) => setNewPriceMC(e.target.value)}
+                className="input input-bordered input-sm"
+              />
+              <input
+                type="number"
+                placeholder="Price SC"
+                value={newPriceSC}
+                onChange={(e) => setNewPriceSC(e.target.value)}
+                className="input input-bordered input-sm"
+              />
+              <input
+                type="number"
+                placeholder="Price FC"
+                value={newPriceFC}
+                onChange={(e) => setNewPriceFC(e.target.value)}
+                className="input input-bordered input-sm"
+              />
+              <input
+                type="number"
+                placeholder="Stock"
+                value={newStock}
+                onChange={(e) => setNewStock(e.target.value)}
+                className="input input-bordered input-sm"
+              />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <button
+                className="btn btn-success btn-sm"
+                onClick={handleBulkUpdate}
+              >
+                Update Selected ({selectedProducts.length})
+              </button>
+              <button className="btn btn-secondary btn-sm" onClick={toggleBulkEditMode}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isAdmin && !bulkEditMode && (
+          <button className="btn btn-primary btn-sm" onClick={toggleBulkEditMode}>
+            Bulk Edit Prices and Stock
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <div>Loading...</div>
+      ) : filteredProducts.length === 0 ? (
+        <div>No products found.</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="table-auto w-full border border-gray-300 min-w-[1200px]">
+            <thead>
+              <tr className="bg-gray-200">
+                {isAdmin && bulkEditMode && (
+                  <th className="border border-gray-700 px-2 py-2 text-center min-w-[60px]">
+                    Select
+                  </th>
+                )}
+                <th className="border border-gray-700 px-2 py-2 text-left min-w-[200px]">Name</th>
+                <th className="border border-gray-700 px-2 py-2 text-center min-w-[100px]">Category</th>
+                <th className="border border-gray-700 px-2 py-2 text-center min-w-[120px]">SubCategory</th>
+                <th className="border border-gray-700 px-2 py-2 text-center min-w-[140px]">SubSubCategory</th>
+                <th className="border border-gray-700 px-2 py-2 text-center min-w-[120px]">Special Lines</th>
+                <th className="border border-gray-700 px-2 py-2 text-center min-w-[120px]">Price</th>
+                <th className="border border-gray-700 px-2 py-2 text-center min-w-[80px]">Stock</th>
+                <th className="border border-gray-700 px-2 py-2 text-center min-w-[100px]">Orders Received</th>
+                <th className="border border-gray-700 px-2 py-2 text-center min-w-[80px]">Offer</th>
+                {isAdmin && (
+                  <th className="border border-gray-700 px-2 py-2 text-center min-w-[200px]">Actions</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {displayedProducts.map((product) => (
+                <tr key={product._id} className="hover:bg-gray-100">
+                  {isAdmin && bulkEditMode && (
+                    <td className="border border-gray-700 px-2 py-2 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedProducts.includes(product._id)}
+                        onChange={() => handleCheckboxChange(product._id)}
+                      />
+                    </td>
+                  )}
+                  <td className="border border-gray-700 px-2 py-2 text-left">
+                    <div className="whitespace-normal break-words" title={product.name}>
+                      {product.name}
+                    </div>
+                  </td>
+                  <td className="border border-gray-700 px-2 py-2 text-center">
+                    <div className="max-w-[100px] truncate" title={getCategoryName(product.category)}>
+                      {getCategoryName(product.category)}
+                    </div>
+                  </td>
+                  <td className="border border-gray-700 px-2 py-2 text-center">
+                    <div className="max-w-[120px] truncate" title={getSubCategoryName(product.subCategory)}>
+                      {getSubCategoryName(product.subCategory)}
+                    </div>
+                  </td>
+                  <td className="border border-gray-700 px-2 py-2 text-center">
+                    <div className="max-w-[140px] truncate" title={getSubSubCategoryName(product.subSubCategory)}>
+                      {getSubSubCategoryName(product.subSubCategory)}
+                    </div>
+                  </td>
+                  <td className="border border-gray-700 px-2 py-2 text-center">
+                    {product.specialLines.length > 0 ? (
+                      <div className="max-w-[120px]">
+                        <div className="text-xs">
+                          {product.specialLines.length} line{product.specialLines.length > 1 ? 's' : ''}
+                        </div>
+                        <div className="text-xs text-gray-600 truncate" title={product.specialLines.join(', ')}>
+                          {product.specialLines[0]}
+                          {product.specialLines.length > 1 && '...'}
+                        </div>
+                      </div>
+                    ) : (
+                      "N/A"
+                    )}
+                  </td>
+                  <td className="border border-gray-700 text-center">
+                    <div className="px-1 py-1 w-full border-b border-b-gray-300 text-xs">
+                      BC {product?.priceBC?.toFixed(2)}/-
+                    </div>
+                    <div className="px-1 py-1 w-full border-b border-b-gray-300 text-xs">
+                      MC: {product?.priceMC?.toFixed(2)}/-
+                    </div>
+                    <div className="px-1 py-1 w-full border-b border-b-gray-300 text-xs">
+                      SC: {product?.priceSC?.toFixed(2)}/-
+                    </div>
+                    <div className="px-1 py-1 w-full text-xs">
+                      FC: {product?.priceFC?.toFixed(2)}/-
+                    </div>
+                  </td>
+                  <td className="border border-gray-700 px-2 py-2 text-center">
+                    {product.stock || 0}
+                  </td>
+                  <td className="border border-gray-700 px-2 py-2 text-center">
+                    <span className={`badge ${(product.orderCount || 0) === 0 ? 'badge-error' : (product.orderCount || 0) < 5 ? 'badge-warning' : 'badge-success'}`}>
+                      {product.orderCount || 0}
+                    </span>
+                  </td>
+                  <td className="border border-gray-700 px-2 py-2 text-center">
+                    <span className={`badge ${product.hasOffer ? 'badge-success' : 'badge-neutral'}`}>
+                      {product.hasOffer ? "Yes" : "No"}
+                    </span>
+                  </td>
+                  {isAdmin && (
+                    <td className="border border-gray-700 px-2 py-2 text-center">
+                      <div className="flex flex-col sm:flex-row justify-center gap-1">
+                        <Link to={`/dashboard/admin/viewProduct/${product._id}`}>
+                          <button className="btn btn-primary btn-xs sm:btn-sm">View</button>
+                        </Link>
+                        <Link to={`/dashboard/admin/editProduct/${product._id}`}>
+                          <button className="btn btn-warning btn-xs sm:btn-sm">Edit</button>
+                        </Link>
+                        <button
+                          className="btn bg-red-600 text-white btn-xs sm:btn-sm"
+                          onClick={() => handleDelete(product._id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row justify-center mt-4 items-center gap-2">
+        {/* Pagination buttons - responsive layout */}
+        <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
+          {getPaginationRange().map((pageNumber) => (
+            <button
+              key={pageNumber}
+              onClick={() => handlePageChange(pageNumber)}
+              className={`btn btn-sm ${currentPage === pageNumber ? "btn-primary" : "btn-secondary"}`}
+            >
+              {pageNumber}
+            </button>
+          ))}
+        </div>
+        
+        {/* Page navigation controls */}
+        <div className="flex flex-col sm:flex-row items-center gap-2 mt-2 sm:mt-0">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="btn btn-sm btn-outline"
+            >
+              ←
+            </button>
+            <span className="text-sm px-2">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="btn btn-sm btn-outline"
+            >
+              →
+            </button>
+          </div>
+          
+          {/* Direct page input */}
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              min="1"
+              max={totalPages}
+              placeholder="Page"
+              className="input input-bordered input-sm w-16 text-center"
+              onChange={(e) => {
+                const value = e.target.value;
+                const page = Math.max(1, Math.min(totalPages, parseInt(value) || 1));
+                setCurrentPage(page);
+              }}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  const value = e.target.value;
+                  const page = Math.max(1, Math.min(totalPages, parseInt(value) || 1));
+                  handlePageChange(page);
+                }
+              }}
+            />
+            <button
+              onClick={() => {
+                const page = Math.max(1, Math.min(totalPages, currentPage));
+                handlePageChange(page);
+              }}
+              className="btn btn-sm btn-primary"
+            >
+              Go
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default LowestOrderProducts;

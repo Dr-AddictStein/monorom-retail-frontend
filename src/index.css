@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    color: black;
+}
+
+.hover-effect {
+    overflow: hidden; /* Ensures the hover effect doesn’t overflow */
+}
+
+.hover-effect::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.5); /* Shade color */
+    transform: scaleX(0);
+    transform-origin: left; /* Start the effect from the left */
+    transition: transform 0.3s ease;
+    z-index: 0;
+}
+
+.hover-effect:hover::before {
+    transform: scaleX(1); /* Expands to cover the full area */
+    transform-origin: left;
+}
+
+.hover-effect span {  
+    z-index: 1;
+}
+
+/* Add this to your CSS file or as global styles */
+.sidebar-scrollbar {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #4A4A4A transparent; /* Firefox */
+}
+
+.sidebar-scrollbar::-webkit-scrollbar {
+    width: 6px; /* Chrome, Safari, and Edge */
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #4A4A4A; /* Scrollbar thumb color */
+    border-radius: 10px; /* Round edges of the thumb */
+    border: 2px solid transparent; /* Adds spacing around the thumb */
+}
+
+
+
+ul::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ul::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 4px;
+  }
+  
+  ul::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
+  }
+
+  .truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Carousel Styles */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Safari and Chrome */
+  }
+
+  /* Smooth touch scrolling for mobile */
+  .carousel-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Snap scroll for better alignment */
+  .snap-x {
+    scroll-snap-type: x mandatory;
+  }
+  
+  .snap-start {
+    scroll-snap-align: start;
+  }
+
+
+
+  /* Smooth gradient animations */
+  .gradient-overlay {
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%);
+  }
+
+  /* Button hover effects */
+  .nav-button {
+    backdrop-filter: blur(10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .nav-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  }
+
+  /* Dashboard Mobile Styles */
+  .sidebar-transition {
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .sidebar-overlay {
+    backdrop-filter: blur(2px);
+  }
+
+  /* Prevent body scroll when sidebar is open on mobile */
+  .no-scroll {
+    overflow: hidden;
+  }
+
+  /* Smooth animations for mobile */
+  @media (max-width: 768px) {
+    .sidebar-transition {
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+
+  /* Dashboard link hover effects */
+  .dashboard-link {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .dashboard-link:hover {
+    transform: translateX(4px);
+  }
+
+  /* Mobile touch improvements */
+  @media (max-width: 768px) {
+    .dashboard-link {
+      padding: 12px 8px;
+      margin: 2px 0;
+    }
+  }

@@ -1,0 +1,9 @@
+145.223.22.68
+Vr#L@#u#*[;vo!rLqB9:
+cp -r dist/* /var/www/netflix/client
+sudo systemctl restart nginx
+
+pm2 restart api
+
+
+npx eas build --platform android
