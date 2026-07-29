@@ -5,10 +5,12 @@ import { MdLogout } from "react-icons/md";
 import { Link, useLocation } from "react-router-dom";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { useLogout } from "../hooks/useLogout";
+import { useCart } from "../context/CartContext";
 
 const Navbar = () => {
   const { user } = useAuthContext();
   const { logout } = useLogout();
+  const { cartCount } = useCart();
   const [mainUser, setMainUser] = useState(null);
   const [logo, setLogo] = useState("");
   const [categories, setCategories] = useState([]);
@@ -102,13 +104,16 @@ const Navbar = () => {
       <Link to={"/"}>
         <li className="ml-3 md:ml-0">Home</li>
       </Link>
+      <Link to={"/user/orderHistory"}>
+        <li className="ml-3 md:ml-0">My Orders</li>
+      </Link>
       {user?.user?.role === "admin" && (
         <Link to={"/dashboard/admin/adminHome"}>
           <li>Dashboard</li>
         </Link>
       )}
       {user?.user?.role === "user" && (
-        <Link to={"/dashboard/user/orderHistory"}>
+        <Link to={"/dashboard/user/profile"}>
           <li className="ml-3 md:ml-0">Dashboard</li>
         </Link>
       )}
@@ -185,11 +190,16 @@ const Navbar = () => {
         </div>
         <div className="navbar-end">
           <div className="flex  items-center gap-3">
+            <Link to={"/user/cart"} className="relative">
+              <FaCartArrowDown className="text-white text-4xl p-2 rounded-full cursor-pointer" />
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-white text-gray-900 text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
+            </Link>
             {user ? (
               <div className={`text-white flex items-center gap-5 rounded-full`}>
-                <Link to={"/dashboard/user/cart"}>
-                  <FaCartArrowDown className="text-white text-4xl p-2 rounded-full cursor-pointer" />
-                </Link>
                 <p className="pl-4 hidden md:block text-xs md:text-[16px] ">
                   {mainUser?.firstName} {mainUser?.lastName}
                 </p>
@@ -213,6 +223,11 @@ const Navbar = () => {
                       </Link>
                     </li>
                     <li>
+                      <Link to={"/user/orderHistory"}>
+                        My Orders
+                      </Link>
+                    </li>
+                    <li>
                       <Link onClick={logout}>
                         <MdLogout /> Logout
                       </Link>
@@ -221,7 +236,7 @@ const Navbar = () => {
                 </div>
               </div>
             ) : (
-              <div className="flex gap-10 items-center font-semibold">
+              <div className="flex gap-10 items-center font-semibold text-white">
                 <Link to={"/login"}>Login</Link>
                 <Link to={"/signup"} className="bg-[#222d37] text-white px-3 pt-1 pb-[0.4rem] rounded-md">
                   Signup

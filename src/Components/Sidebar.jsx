@@ -169,9 +169,9 @@ const Sidebar = ({ onClose }) => {
             <IoCheckmarkDoneCircleOutline /> Completed Orders
           </Link>
           <Link
-            to="/dashboard/user/orderHistory"
+            to="/user/orderHistory"
             onClick={handleLinkClick}
-            className={`rounded-lg px-1 py-1 flex gap-2 items-center dashboard-link ${location.pathname === "/dashboard/user/orderHistory"
+            className={`rounded-lg px-1 py-1 flex gap-2 items-center dashboard-link ${location.pathname === "/user/orderHistory"
                 ? "bg-white text-black"
                 : ""
               }`}
@@ -203,9 +203,9 @@ const Sidebar = ({ onClose }) => {
       {role === "user" && (
         <div className="flex flex-col gap-2 pl-2">
           <Link
-            to="/dashboard/user/orderHistory"
+            to="/user/orderHistory"
             onClick={handleLinkClick}
-            className={`rounded-lg px-1 py-1 flex gap-2 items-center dashboard-link ${location.pathname === "/dashboard/user/orderHistory"
+            className={`rounded-lg px-1 py-1 flex gap-2 items-center dashboard-link ${location.pathname === "/user/orderHistory"
                 ? "bg-white text-black"
                 : ""
               }`}
@@ -247,9 +247,9 @@ const Sidebar = ({ onClose }) => {
           <ImProfile /> My Profile
         </Link>
         <Link
-          to="/dashboard/user/cart"
+          to="/user/cart"
           onClick={handleLinkClick}
-          className={`rounded-lg px-1 py-1 flex gap-2 items-center dashboard-link ${location.pathname === "/dashboard/user/cart"
+          className={`rounded-lg px-1 py-1 flex gap-2 items-center dashboard-link ${location.pathname === "/user/cart"
               ? "bg-white text-black"
               : ""
             }`}

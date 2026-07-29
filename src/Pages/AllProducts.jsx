@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthContext } from "../hooks/useAuthContext";
+import { useCart } from "../context/CartContext";
 import offerImg from "../../public/offer-removebg-preview.png";
 import outOfStockImg from "../../public/out of stock.png";
 
@@ -299,7 +300,7 @@ const AllProducts = () => {
             (
               pr // Use filteredAndSortedProducts for rendering
             ) => (
-              <ProductCard key={pr.id} product={pr} userId={user?.user?._id} user={user} />
+              <ProductCard key={pr.id} product={pr} user={user} />
             )
           )}
         </div>
@@ -309,14 +310,26 @@ const AllProducts = () => {
 };
 
 // ProductCard component to handle individual hover states
-const ProductCard = ({ product, userId, user }) => {
+const ProductCard = ({ product, user }) => {
+  const { addItem } = useCart();
   const [isHovered, setIsHovered] = useState(false);
   const [showQtyModal, setShowQtyModal] = useState(false);
   const [qty, setQty] = useState(1);
   const [qtyError, setQtyError] = useState("");
 
+  const getPrice = () => {
+    if (user?.user?.userView === "BC") return product?.priceBC;
+    if (user?.user?.userView === "MC") return product?.priceMC;
+    if (user?.user?.userView === "SC") return product?.priceSC;
+    return product?.priceFC;
+  };
+
   const handleAddToCartClick = (e) => {
     e.preventDefault();
+    if (!product?.stock || product.stock < 1) {
+      toast.error("This product is out of stock.");
+      return;
+    }
     setQty(1);
     setQtyError("");
     setShowQtyModal(true);
@@ -358,26 +371,21 @@ const ProductCard = ({ product, userId, user }) => {
     setQtyError("");
   };
 
-  const handleConfirmAddToCart = async () => {
+  const handleConfirmAddToCart = () => {
     if (qty < 1 || qty > product.stock) {
       setQtyError(`Please enter a quantity between 1 and ${product.stock}`);
       return;
     }
-    const data = { userId: userId, productId: product._id, qty };
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/cart/addToCart/` + userId,
-        data
-      );
-      if (response.status === 200) {
-        toast.success("Product Successfully Added to Your Cart!");
-        setShowQtyModal(false);
-      } else {
-        toast.error("Failed to add product to cart.");
-      }
-    } catch (error) {
-      toast.error("Error Adding to Cart: " + error.message);
-    }
+    addItem({
+      productId: product._id,
+      name: product.name,
+      image: product.productThumbnail,
+      category: "",
+      price: getPrice(),
+      qty,
+    });
+    toast.success("Product Successfully Added to Your Cart!");
+    setShowQtyModal(false);
   };
 
 
@@ -459,14 +467,13 @@ const ProductCard = ({ product, userId, user }) => {
         </div>
         <div className="p-1 md:p-2 h-[100px] md:h-[150px] flex flex-col justify-between">
           <h3 className="text-sm md:text-2xl text-center">{product?.name}</h3>
-          {user?.user?.userView === "BC" && <h4 className="text-xs md:text-xl text-center">Price: {product?.priceBC}/-</h4>}
-          {user?.user?.userView === "MC" && <h4 className="text-xs md:text-xl text-center">Price: {product?.priceMC}/-</h4>}
-          {(!user || user?.user?.userView === "FC") && <h4 className="text-xs md:text-xl text-center">Price: {product?.priceFC}/-</h4>}
-          {user?.user?.userView === "SC" && <h4 className="text-xs md:text-xl text-center">Price: {product?.priceSC}/-</h4>}
+          {user?.user?.userView === "BC" && <h4 className="text-xs md:text-xl text-center">Price: Tk. {product?.priceBC}</h4>}
+          {user?.user?.userView === "MC" && <h4 className="text-xs md:text-xl text-center">Price: Tk. {product?.priceMC}</h4>}
+          {(!user || user?.user?.userView === "FC") && <h4 className="text-xs md:text-xl text-center">Price: Tk. {product?.priceFC}</h4>}
+          {user?.user?.userView === "SC" && <h4 className="text-xs md:text-xl text-center">Price: Tk. {product?.priceSC}</h4>}
         </div>
       </Link>
-      {user?.user?._id && (
-        <>
+      <>
           <button
             onClick={handleAddToCartClick}
             className="bg-[#212121] rounded-b-lg p-1 md:p-2 text-white mt-2 md:mt-4 text-sm md:text-xl w-full"
@@ -524,8 +531,7 @@ const ProductCard = ({ product, userId, user }) => {
               </div>
             </div>
           )}
-        </>
-      )}
+      </>
     </div>
   );
 };

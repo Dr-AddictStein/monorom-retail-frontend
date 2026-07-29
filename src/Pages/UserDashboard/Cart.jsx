@@ -1,14 +1,16 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthContext } from "../../hooks/useAuthContext";
-import Modal from "./Modal"; // Import the Modal component
+import { useCart } from "../../context/CartContext";
+import { addLocalOrder } from "../../utils/localOrders";
+import Modal from "./Modal";
 
 const Table = ({ data, rowsPerPage, onDelete, setIsModalOpen }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(data.length / rowsPerPage);
+  const totalPages = Math.max(1, Math.ceil(data.length / rowsPerPage));
 
   const paginateData = data.slice(
     (currentPage - 1) * rowsPerPage,
@@ -31,111 +33,136 @@ const Table = ({ data, rowsPerPage, onDelete, setIsModalOpen }) => {
     ) {
       try {
         await onDelete(id);
-        toast.success("Product deleted successfully!");
+        toast.success("Product removed from cart!");
       } catch (error) {
         console.error("Error deleting product:", error);
-        toast.error("Error deleting product. Please try again.");
+        toast.error("Error removing product. Please try again.");
       }
     }
   };
 
   return (
-    <div className="w-full p-6 bg-gray-50 rounded-lg shadow-md">
+    <div className="w-full p-4 md:p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold text-gray-800 mb-4 text-center">
         My Cart
       </h2>
-      <div className="overflow-x-auto">
-        <div className="flex flex-col justify-center">
-          <table className="min-w-full bg-white rounded-lg shadow">
-            <thead>
-              <tr className="bg-gray-100 text-gray-600 uppercase text-sm">
-                <th className="p-4 text-center">ID</th>
-                <th className="p-4 text-center">Image</th>
-                <th className="p-4 text-center">Name</th>
-                <th className="p-4 text-center">Category</th>
-                <th className="p-4 text-center">Price</th>
-                <th className="p-4 text-center">Quantity</th>
-                <th className="p-4 text-center">Total Price</th>
-                <th className="p-4 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginateData.map((item, index) => (
-                <tr key={index} className="border-b hover:bg-gray-100">
-                  <td className="p-4">{index + 1}</td>
-                  <td className="p-4">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-16 h-16 object-cover"
-                    />
-                  </td>
-                  <td className="p-4 text-center">{item.name}</td>
-                  <td className="p-4 text-center">{item.category}</td>
-                  <td className="p-4 text-center">tk {item.price.toFixed(2)}/-</td>
-                  <td className="p-4 text-center">x{item.qty}</td>
-                  <td className="p-4 text-center">tk {item.totalPrice.toFixed(2)}/-</td>
-                  <td className="p-4 text-center">
-                    <div className="flex justify-center gap-2">
-                      <Link to={`/productDetails/${item.productId}`}>
-                        <button className="btn btn-primary">View</button>
-                      </Link>
-                      <button
-                        className="btn bg-red-600 text-white"
-                        onClick={() => handleDelete(item.cartId)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      {/* Total Cost */}
-      {data.length > 0 && (
-        <div className="flex justify-between items-center mt-4">
-          <span className="text-lg font-semibold">
-            Total Cost: $
-            {data.reduce((total, item) => total + item.totalPrice, 0).toFixed(2)}
-          </span>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+      {data.length === 0 ? (
+        <div className="text-center py-16 text-gray-500">
+          <p className="text-lg mb-4">Your cart is empty.</p>
+          <Link
+            to="/allProducts"
+            className="inline-block px-6 py-2.5 bg-gray-900 text-white hover:bg-white hover:text-gray-900 border border-gray-900 transition-colors"
           >
-            Make the Order
-          </button>
+            Browse Products
+          </Link>
         </div>
+      ) : (
+        <>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white rounded-lg">
+              <thead>
+                <tr className="bg-gray-100 text-gray-600 uppercase text-sm">
+                  <th className="p-4 text-center">ID</th>
+                  <th className="p-4 text-center">Image</th>
+                  <th className="p-4 text-center">Name</th>
+                  <th className="p-4 text-center">Category</th>
+                  <th className="p-4 text-center">Price</th>
+                  <th className="p-4 text-center">Quantity</th>
+                  <th className="p-4 text-center">Total Price</th>
+                  <th className="p-4 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginateData.map((item, index) => (
+                  <tr key={item.cartId} className="border-b hover:bg-gray-50">
+                    <td className="p-4 text-center">
+                      {(currentPage - 1) * rowsPerPage + index + 1}
+                    </td>
+                    <td className="p-4">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-16 h-16 object-cover mx-auto"
+                      />
+                    </td>
+                    <td className="p-4 text-center">{item.name}</td>
+                    <td className="p-4 text-center">{item.category}</td>
+                    <td className="p-4 text-center">Tk. {Number(item.price).toFixed(2)}</td>
+                    <td className="p-4 text-center">x{item.qty}</td>
+                    <td className="p-4 text-center">
+                      Tk. {Number(item.totalPrice).toFixed(2)}
+                    </td>
+                    <td className="p-4 text-center">
+                      <div className="flex justify-center gap-2">
+                        <Link to={`/productDetails/${item.productId}`}>
+                          <button
+                            type="button"
+                            className="px-3 py-1.5 bg-gray-900 text-white text-sm hover:bg-gray-700"
+                          >
+                            View
+                          </button>
+                        </Link>
+                        <button
+                          type="button"
+                          className="px-3 py-1.5 bg-red-600 text-white text-sm hover:bg-red-700"
+                          onClick={() => handleDelete(item.cartId)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+            <span className="text-lg font-semibold text-gray-900">
+              Total Cost: Tk.{" "}
+              {data
+                .reduce((total, item) => total + Number(item.totalPrice), 0)
+                .toFixed(2)}
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="px-6 py-2.5 bg-gray-900 text-white border border-gray-900 hover:bg-white hover:text-gray-900 transition-colors"
+            >
+              Make the Order
+            </button>
+          </div>
+
+          <div className="flex justify-between items-center mt-4">
+            <button
+              type="button"
+              onClick={handlePrev}
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-gray-900 text-white rounded disabled:bg-gray-300"
+            >
+              Previous
+            </button>
+            <span className="text-gray-700">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 bg-gray-900 text-white rounded disabled:bg-gray-300"
+            >
+              Next
+            </button>
+          </div>
+        </>
       )}
-      {/* Pagination Controls */}
-      <div className="flex justify-between items-center mt-4">
-        <button
-          onClick={handlePrev}
-          disabled={currentPage === 1}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300"
-        >
-          Previous
-        </button>
-        <span className="text-gray-700">
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          onClick={handleNext}
-          disabled={currentPage === totalPages}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300"
-        >
-          Next
-        </button>
-      </div>
     </div>
   );
 };
 
 const Cart = () => {
   const { user } = useAuthContext();
-  const [data, setData] = useState([]);
+  const { cart, removeItem, clear, refresh } = useCart();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [orderDetails, setOrderDetails] = useState({
     name: "",
@@ -143,106 +170,93 @@ const Cart = () => {
     email: "",
     address: "",
     companyName: "",
-    requirements: ""
+    requirements: "",
   });
+  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
 
-  const navigate=useNavigate();
+  useEffect(() => {
+    refresh();
+  }, []);
 
-  const fetchData = async () => {
-    try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/cart/getCartByUserId/${user?.user?._id
-        }`
-      );
-      setData(response.data);
-      setOrderDetails({
-        name: user?.user?.firstName + ' ' + user?.user?.lastName,
-        phone: user?.user?.phone,
-        email: "",
-        address: user?.user?.shippingAddress,
-        companyName: user?.user?.companyName,
-      })
-    } catch (error) {
-      console.error("Error fetching cart data:", error);
+  useEffect(() => {
+    if (user?.user) {
+      setOrderDetails((prev) => ({
+        ...prev,
+        name:
+          prev.name ||
+          `${user.user.firstName || ""} ${user.user.lastName || ""}`.trim(),
+        phone: prev.phone || user.user.phone || "",
+        address: prev.address || user.user.shippingAddress || "",
+        companyName: prev.companyName || user.user.companyName || "",
+      }));
     }
-  };
+  }, [user?.user]);
 
-  const handleDeleteProduct = async (id) => {
-    try {
-      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/cart/${id}`);
-      fetchData();
-    } catch (error) {
-      throw new Error("Error deleting product.");
-    }
+  const handleDeleteProduct = async (cartId) => {
+    removeItem(cartId);
   };
 
   const handleOrderSubmit = async () => {
+    if (cart.length === 0) {
+      toast.error("Your cart is empty.");
+      return;
+    }
+
+    setSubmitting(true);
     try {
-      const totalCost = data
-        .reduce((total, item) => total + item.totalPrice, 0)
-        .toFixed(2); // Calculate total cost
+      const totalCost = cart
+        .reduce((total, item) => total + Number(item.totalPrice), 0)
+        .toFixed(2);
+
       const orderData = {
-        userId: user?.user?._id,
-        cartData: data,
-        totalCost, // Include total cost
+        userId: user?.user?._id || "guest",
+        cartData: cart,
+        totalCost,
         status: "received",
         ...orderDetails,
       };
-      await axios.post(
+
+      const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/order/createOrder`,
         orderData
       );
-      console.log("Happy.!.", orderData);
+
+      const savedOrder = response.data;
+      addLocalOrder(savedOrder);
+      clear();
+
       toast.success("Order placed successfully!");
       setIsModalOpen(false);
-      fetchData(); // Optionally refresh cart data after order
-      setOrderDetails({ name: "", phone: "", email: "", address: "", companyName: "", requirements: "" }); // Reset form
-      navigate('/dashboard/user/orderHistory');
+      setOrderDetails({
+        name: "",
+        phone: "",
+        email: "",
+        address: "",
+        companyName: "",
+        requirements: "",
+      });
+      navigate("/user/orderHistory");
     } catch (error) {
       console.error("Error placing order:", error);
       toast.error("Failed to place the order. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  useEffect(() => {
-    if (user?.user?._id) {
-      fetchData();
-    }
-  }, [user?.user?._id]);
-
-
-  if (!user) {
-    return (
-      <div className="h-[100vh] flex flex-col justify-center gap-10">
-        <div className="text-5xl text-center">You are Not Logged in.!.</div>
-        <div className="text-3xl text-center">Please Sign Up</div>
-        <div className="flex justify-center gap-3">
-          <Link to={'/login'} className="px-3 py-2 bg-emerald-700 rounded-md text-xl text-white">
-            <button>Login</button>
-          </Link>
-          <Link to={'/signup'} className="px-3 py-2 bg-slate-700 rounded-md text-xl text-white">
-            <button>SignUp</button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-
-
   return (
-    <div className="flex justify-center items-start min-h-screen bg-gray-100">
+    <div className="flex justify-center items-start min-h-screen bg-gray-100 pt-32 md:pt-40 pb-16 px-4">
       <ToastContainer />
       <div className="w-full max-w-6xl">
         <Table
-          data={data}
+          data={cart}
           rowsPerPage={10}
           onDelete={handleDeleteProduct}
-          setIsModalOpen={() => setIsModalOpen(true)}
+          setIsModalOpen={setIsModalOpen}
         />
       </div>
 
-      {/* Modal for Order Details */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <h2 className="text-2xl font-semibold mb-4">Order Details</h2>
         <form
@@ -273,7 +287,10 @@ const Cart = () => {
               type="text"
               value={orderDetails.companyName}
               onChange={(e) =>
-                setOrderDetails({ ...orderDetails, companyName: e.target.value })
+                setOrderDetails({
+                  ...orderDetails,
+                  companyName: e.target.value,
+                })
               }
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
               required
@@ -326,7 +343,10 @@ const Cart = () => {
             <textarea
               value={orderDetails.requirements}
               onChange={(e) =>
-                setOrderDetails({ ...orderDetails, requirements: e.target.value })
+                setOrderDetails({
+                  ...orderDetails,
+                  requirements: e.target.value,
+                })
               }
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
               placeholder="Enter any special requirements or notes for your order..."
@@ -343,9 +363,10 @@ const Cart = () => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              disabled={submitting}
+              className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
             >
-              Place Order
+              {submitting ? "Placing..." : "Place Order"}
             </button>
           </div>
         </form>

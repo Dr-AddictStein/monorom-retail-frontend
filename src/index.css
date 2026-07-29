@@ -146,6 +146,89 @@ ul::-webkit-scrollbar {
     transform: translateX(4px);
   }
 
+  /* Category product card entrance */
+  @keyframes product-card-in {
+    from {
+      opacity: 0;
+      transform: translateY(40px) scale(0.94);
+      filter: blur(6px);
+    }
+    60% {
+      opacity: 1;
+      filter: blur(0);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+  }
+
+  .product-card-appear {
+    opacity: 0;
+    will-change: transform, opacity, filter;
+  }
+
+  .product-card-appear.is-visible {
+    animation: product-card-in 1.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Product details page */
+  @keyframes pd-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(32px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pd-image-in {
+    from {
+      opacity: 0;
+      transform: scale(1.04);
+      filter: blur(8px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+      filter: blur(0);
+    }
+  }
+
+  @keyframes pd-thumb-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .pd-gallery-enter {
+    animation: pd-fade-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .pd-info-enter {
+    animation: pd-fade-up 1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+  }
+
+  .pd-main-image {
+    animation: pd-image-in 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .pd-thumb {
+    animation: pd-thumb-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .pd-section-enter {
+    animation: pd-fade-up 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
+  }
+
   /* Mobile touch improvements */
   @media (max-width: 768px) {
     .dashboard-link {

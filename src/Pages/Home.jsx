@@ -89,115 +89,120 @@ const Home = () => {
     }
   };
 
-  const getCardWidth = () => {
-    if (window.innerWidth >= 1024) return 320; // lg screens
-    if (window.innerWidth >= 768) return 280;  // md screens
-    return 260; // sm screens
+  const getCardScrollAmount = (index) => {
+    const track = carouselRefs.current[index];
+    if (!track) return 200;
+    const firstCard = track.querySelector("[data-product-card]");
+    if (firstCard) {
+      return firstCard.offsetWidth + 16; // gap-4
+    }
+    return track.clientWidth / 4 + 16;
   };
 
   const scrollLeft = (index) => {
     if (carouselRefs.current[index]) {
-      const cardWidth = getCardWidth();
-      const gap = 16; // space-x-4 = 16px
-      const scrollAmount = cardWidth + gap;
+      const scrollAmount = getCardScrollAmount(index);
       carouselRefs.current[index].scrollLeft -= scrollAmount;
-      
-      // Update current slide indicator
+
       const newSlide = Math.max(0, (currentSlide[index] || 0) - 1);
-      setCurrentSlide(prev => ({ ...prev, [index]: newSlide }));
+      setCurrentSlide((prev) => ({ ...prev, [index]: newSlide }));
     }
   };
 
   const scrollRight = (index) => {
     if (carouselRefs.current[index]) {
-      const cardWidth = getCardWidth();
-      const gap = 16; // space-x-4 = 16px
-      const scrollAmount = cardWidth + gap;
+      const scrollAmount = getCardScrollAmount(index);
       carouselRefs.current[index].scrollLeft += scrollAmount;
-      
-      // Update current slide indicator
+
       const maxSlides = allData[index]?.productsData?.length || 0;
       const newSlide = Math.min(maxSlides - 1, (currentSlide[index] || 0) + 1);
-      setCurrentSlide(prev => ({ ...prev, [index]: newSlide }));
+      setCurrentSlide((prev) => ({ ...prev, [index]: newSlide }));
     }
   };
 
   const goToSlide = (carouselIndex, slideIndex) => {
     if (carouselRefs.current[carouselIndex]) {
-      const cardWidth = getCardWidth();
-      const gap = 16;
-      const scrollAmount = (cardWidth + gap) * slideIndex;
+      const scrollAmount = getCardScrollAmount(carouselIndex) * slideIndex;
       carouselRefs.current[carouselIndex].scrollLeft = scrollAmount;
-      setCurrentSlide(prev => ({ ...prev, [carouselIndex]: slideIndex }));
+      setCurrentSlide((prev) => ({ ...prev, [carouselIndex]: slideIndex }));
     }
   };
 
   const renderCarousel = (item, index) => {
     const products = allData[index]?.productsData || [];
-    const maxVisibleSlides = Math.ceil(products.length / (window.innerWidth >= 1024 ? 3 : window.innerWidth >= 768 ? 2 : 1));
-    
+    const visibleCount =
+      typeof window !== "undefined" && window.innerWidth >= 1024
+        ? 4
+        : typeof window !== "undefined" && window.innerWidth >= 768
+          ? 3
+          : 2;
+    const maxVisibleSlides = Math.ceil(products.length / visibleCount);
+
     return (
-      <div key={index} className="w-full max-w-7xl mx-auto pt-16 md:pt-32 px-4 md:px-6" id={item?.name}>
-        {/* Category Title */}
-        <div className="pb-8 md:pb-12">
-          <Link to={`/category/${item?._id}`} className="group">
-            <h3 className="text-2xl md:text-4xl lg:text-5xl font-bold text-center text-gray-800 transition-colors duration-300 group-hover:text-blue-600">
-              {allData[index]?.name}
-            </h3>
-            <div className="w-24 h-1 bg-blue-500 mx-auto mt-3 rounded-full transform transition-all duration-300 group-hover:w-32"></div>
-          </Link>
+      <div
+        key={index}
+        className="w-full max-w-7xl mx-auto pt-16 md:pt-24 px-4 md:px-6 bg-white"
+        id={item?.name}
+      >
+        {/* Category Title — left aligned, no underline */}
+        <div className="pb-6 md:pb-8">
+          <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-left text-gray-800">
+            {allData[index]?.name}
+          </h3>
         </div>
 
         {/* Carousel Container */}
         <div className="relative group">
-          {/* Navigation Arrows - Hidden on mobile, visible on hover on desktop */}
           <button
             onClick={() => scrollLeft(index)}
-            className="nav-button absolute left-2 md:-left-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 bg-white/90 hover:bg-white shadow-lg rounded-full flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100"
+            className="nav-button absolute left-0 md:-left-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-11 md:h-11 bg-white/90 hover:bg-white rounded-full flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100"
             aria-label="Previous slide"
           >
-            <FaChevronLeft className="text-gray-600 text-sm md:text-lg" />
-          </button>
-          
-          <button
-            onClick={() => scrollRight(index)}
-            className="nav-button absolute right-2 md:-right-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 bg-white/90 hover:bg-white shadow-lg rounded-full flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100"
-            aria-label="Next slide"
-          >
-            <FaChevronRight className="text-gray-600 text-sm md:text-lg" />
+            <FaChevronLeft className="text-gray-600 text-sm md:text-base" />
           </button>
 
-          {/* Carousel Track */}
-          <div className="bg-gradient-to-r from-gray-50 to-white p-4 md:p-8 rounded-2xl shadow-xl overflow-hidden">
+          <button
+            onClick={() => scrollRight(index)}
+            className="nav-button absolute right-0 md:-right-5 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-11 md:h-11 bg-white/90 hover:bg-white rounded-full flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100"
+            aria-label="Next slide"
+          >
+            <FaChevronRight className="text-gray-600 text-sm md:text-base" />
+          </button>
+
+          {/* Carousel Track — no shadow / border / gradient container */}
+          <div className="overflow-hidden">
             <div
               ref={(el) => (carouselRefs.current[index] = el)}
-              className="flex space-x-4 md:space-x-6 overflow-x-auto scrollbar-hide carousel-scroll snap-x"
+              className="flex gap-4 overflow-x-auto scrollbar-hide carousel-scroll snap-x"
             >
               {products.map((product, itemIndex) => (
-                <Link key={itemIndex} to={`/productDetails/${product?._id}`} className="snap-start">
-                  <div className="relative flex-shrink-0 w-[260px] md:w-[280px] lg:w-[320px] group overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                    <div className="overflow-hidden rounded-xl">
-                      <img
-                        className="w-full h-[300px] md:h-[350px] lg:h-[400px] object-cover transition-transform duration-700 group-hover:scale-110"
-                        src={product?.productThumbnail}
-                        alt={product?.name}
-                        loading="lazy"
-                      />
-                    </div>
-                    <div className="gradient-overlay absolute inset-0 rounded-xl"></div>
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 transition-all duration-400 group-hover:opacity-100 rounded-xl">
+                <Link
+                  key={itemIndex}
+                  to={`/productDetails/${product?._id}`}
+                  data-product-card
+                  className="snap-start flex-shrink-0 w-[calc((100%-1rem)/2)] md:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-3rem)/4)]"
+                >
+                  <div className="relative w-full aspect-square group overflow-hidden">
+                    <img
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      src={product?.productThumbnail}
+                      alt={product?.name}
+                      loading="lazy"
+                    />
+                    <div className="gradient-overlay absolute inset-0"></div>
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 transition-all duration-400 group-hover:opacity-100">
                       <div className="text-center transform translate-y-4 group-hover:translate-y-0 transition-transform duration-400">
-                        <h3 className="text-white text-xl md:text-2xl font-bold mb-3 px-4">
+                        <h3 className="text-white text-base md:text-lg font-bold mb-2 px-3">
                           {product?.name}
                         </h3>
-                        <div className="px-6 py-3 border-2 border-white text-white font-semibold rounded-full hover:bg-white hover:text-black transition-all duration-300 text-sm md:text-base">
+                        <div className="px-4 py-2 border border-white text-white font-semibold hover:bg-white hover:text-black transition-all duration-300 text-xs md:text-sm">
                           View Product
                         </div>
                       </div>
                     </div>
-                    <div className="absolute bottom-4 left-4 right-4 transition-opacity duration-400 group-hover:opacity-0">
-                      <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg">
-                        <h3 className="text-gray-800 text-lg md:text-xl font-semibold text-center truncate">
+                    <div className="absolute bottom-3 left-3 right-3 transition-opacity duration-400 group-hover:opacity-0">
+                      <div className="bg-white/95 backdrop-blur-sm px-3 py-1.5">
+                        <h3 className="text-gray-800 text-sm md:text-base font-semibold text-center truncate">
                           {product?.name}
                         </h3>
                       </div>
@@ -209,22 +214,34 @@ const Home = () => {
           </div>
 
           {/* Dot Indicators */}
-          {products.length > 3 && (
+          {products.length > visibleCount && (
             <div className="flex justify-center mt-6 space-x-2">
-              {Array.from({ length: Math.min(maxVisibleSlides, 8) }).map((_, dotIndex) => (
-                <button
-                  key={dotIndex}
-                  onClick={() => goToSlide(index, dotIndex)}
-                  className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-300 ${
-                    (currentSlide[index] || 0) === dotIndex
-                      ? 'bg-blue-500 scale-110'
-                      : 'bg-gray-300 hover:bg-gray-400'
-                  }`}
-                  aria-label={`Go to slide ${dotIndex + 1}`}
-                />
-              ))}
+              {Array.from({ length: Math.min(maxVisibleSlides, 8) }).map(
+                (_, dotIndex) => (
+                  <button
+                    key={dotIndex}
+                    onClick={() => goToSlide(index, dotIndex)}
+                    className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-300 ${
+                      (currentSlide[index] || 0) === dotIndex
+                        ? "bg-blue-500 scale-110"
+                        : "bg-gray-300 hover:bg-gray-400"
+                    }`}
+                    aria-label={`Go to slide ${dotIndex + 1}`}
+                  />
+                )
+              )}
             </div>
           )}
+        </div>
+
+        {/* View All — centered, goes to category page */}
+        <div className="flex justify-center mt-8 md:mt-10 pb-4">
+          <Link
+            to={`/category/${item?._id}`}
+            className="px-8 py-2.5 bg-gray-900 border border-gray-900 text-white font-medium hover:bg-white hover:text-gray-900 transition-colors duration-300"
+          >
+            View All
+          </Link>
         </div>
       </div>
     );
@@ -246,7 +263,7 @@ const Home = () => {
         </div>
       </div>
 
-      <div className="bg-[url('aboutusbg.jpg')] md:p-20">
+      <div className="bg-white md:p-20 py-12">
         <h1 className="text-center font-sans font-semibold text-3xl md:text-6xl pb-10">
           Our Top Categories
         </h1>

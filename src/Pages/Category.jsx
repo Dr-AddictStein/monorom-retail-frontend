@@ -1,16 +1,22 @@
-import axios from "axios";
-import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigationType, useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthContext } from "../hooks/useAuthContext";
+import { useCart } from "../context/CartContext";
 
 const Category = () => {
   const { user } = useAuthContext();
   const { id } = useParams();
+  const navigationType = useNavigationType();
+  const productsSectionRef = useRef(null);
+  const hasHandledScroll = useRef(false);
   const [category, setCategory] = useState(null);
   const [products, setProducts] = useState([]);
+  const [productsLoaded, setProductsLoaded] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const scrollKey = `category-scroll-${id}`;
 
   const fetchCategory = async () => {
     try {
@@ -35,15 +41,64 @@ const Category = () => {
       setProducts(data);
     } catch (error) {
       console.error("Error fetching products:", error);
+    } finally {
+      setProductsLoaded(true);
     }
   };
 
   useEffect(() => {
     if (id) {
+      hasHandledScroll.current = false;
+      setProducts([]);
+      setProductsLoaded(false);
+      setCategory(null);
       fetchCategory();
       fetchProducts();
     }
   }, [id]);
+
+  // Remember scroll while browsing; save on leave
+  useEffect(() => {
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+
+    const saveScroll = () => {
+      sessionStorage.setItem(scrollKey, String(window.scrollY));
+    };
+
+    window.addEventListener("scroll", saveScroll, { passive: true });
+    return () => {
+      saveScroll();
+      window.removeEventListener("scroll", saveScroll);
+    };
+  }, [scrollKey]);
+
+  // Fresh visit → first product; back navigation → restore last position
+  useEffect(() => {
+    if (hasHandledScroll.current) return;
+    if (!productsLoaded) return;
+
+    const applyScroll = () => {
+      if (hasHandledScroll.current) return;
+      hasHandledScroll.current = true;
+
+      if (navigationType === "POP") {
+        const saved = sessionStorage.getItem(scrollKey);
+        if (saved !== null) {
+          window.scrollTo({ top: Number(saved), behavior: "auto" });
+          return;
+        }
+      }
+      productsSectionRef.current?.scrollIntoView({
+        behavior: "auto",
+        block: "start",
+      });
+    };
+
+    const t = window.setTimeout(applyScroll, 50);
+    return () => window.clearTimeout(t);
+  }, [productsLoaded, navigationType, scrollKey]);
 
   const [sortBySales, setSortBySales] = useState("least");
   const [sortByPrice, setSortByPrice] = useState("high");
@@ -102,33 +157,6 @@ const Category = () => {
       return 0;
     });
 
-  if (!user) {
-    return (
-      <div className="h-[100vh] flex flex-col justify-center bg-slate-300 gap-10">
-        <div className="md:text-5xl text-3xl text-center">You are Not Logged in.!.</div>
-        <div className="md:text-3xl text-2xl text-center">Please Sign Up</div>
-        <div className="flex justify-center gap-3">
-          <Link to={'/login'} className="px-3 py-2 bg-emerald-700 rounded-md text-xl text-white">
-            <button>Login</button>
-          </Link>
-          <Link to={'/signup'} className="px-3 py-2 bg-slate-700 rounded-md text-xl text-white">
-            <button>SignUp</button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (user?.user?.permission === false) {
-    return (
-      <div className="h-[100vh] flex flex-col justify-center">
-        <div className="md:text-5xl text-3xl text-center">
-          Please Wait Until Admin gives you Access to the Site
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div>
       <ToastContainer />
@@ -147,7 +175,7 @@ const Category = () => {
         </div>
       </div>
 
-      <div className="md:w-3/4 w-full mx-auto md:pt-8 px-2 md:px-0">
+      <div className="max-w-7xl w-full mx-auto md:pt-8 px-4 md:px-6">
         <div className="mb-20 hidden md:flex justify-between items-center gap-4">
           <label className="input input-bordered flex items-center gap-2 w-1/3">
             <input
@@ -269,9 +297,18 @@ const Category = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-1 md:gap-8">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product._id} product={product} userId={user?.user?._id} user={user} />
+        <div
+          ref={productsSectionRef}
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 pb-16 scroll-mt-4"
+        >
+          {filteredProducts.map((product, index) => (
+            <ProductCard
+              key={product._id}
+              product={product}
+              user={user}
+              index={index}
+              categoryName={category?.name || ""}
+            />
           ))}
         </div>
       </div>
@@ -279,14 +316,46 @@ const Category = () => {
   );
 };
 
-const ProductCard = ({ product, userId, user }) => {
-  const [isHovered, setIsHovered] = useState(false);
+const getDisplayPrice = (product, user) => {
+  if (user?.user?.userView === "BC") return product?.priceBC;
+  if (user?.user?.userView === "MC") return product?.priceMC;
+  if (user?.user?.userView === "SC") return product?.priceSC;
+  return product?.priceFC;
+};
+
+const ProductCard = ({ product, user, index = 0, categoryName = "" }) => {
+  const { addItem } = useCart();
+  const cardRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
   const [showQtyModal, setShowQtyModal] = useState(false);
   const [qty, setQty] = useState(1);
   const [qtyError, setQtyError] = useState("");
   const [daysLeft, setDaysLeft] = useState(null);
 
-  const calculateDaysLeft = () => {
+  const outOfStock = !product?.stock || product.stock < 1;
+  const lowStock =
+    product?.stock >= 1 && product?.stock <= product?.panicStock;
+  const price = getDisplayPrice(product, user);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(el);
+        }
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     if (product?.offerPanicStarts) {
       const today = new Date();
       const offerTill = new Date(product?.offerTill);
@@ -294,20 +363,22 @@ const ProductCard = ({ product, userId, user }) => {
 
       if (today >= offerPanicStarts) {
         const timeDiff = offerTill - today;
-        const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
-        setDaysLeft(daysRemaining);
+        setDaysLeft(Math.ceil(timeDiff / (1000 * 3600 * 24)));
       } else {
         setDaysLeft(null);
       }
+    } else {
+      setDaysLeft(null);
     }
-  };
-
-  useEffect(() => {
-    calculateDaysLeft();
   }, [product]);
 
   const handleAddToCartClick = (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    if (outOfStock) {
+      toast.error("This product is out of stock.");
+      return;
+    }
     setQty(1);
     setQtyError("");
     setShowQtyModal(true);
@@ -345,147 +416,174 @@ const ProductCard = ({ product, userId, user }) => {
     setQtyError("");
   };
 
-  const handleConfirmAddToCart = async () => {
+  const handleConfirmAddToCart = () => {
     if (qty < 1 || qty > product.stock) {
       setQtyError(`Please enter a quantity between 1 and ${product.stock}`);
       return;
     }
-    const data = { userId: userId, productId: product._id, qty };
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/cart/addToCart/` + userId,
-        data
-      );
-      if (response.status === 200) {
-        toast.success("Product Successfully Added to Your Cart!");
-        setShowQtyModal(false);
-      } else {
-        toast.error("Failed to add product to cart.");
-      }
-    } catch (error) {
-      toast.error("Error Adding to Cart: " + error.message);
-    }
+    addItem({
+      productId: product._id,
+      name: product.name,
+      image: product.productThumbnail,
+      category: categoryName,
+      price,
+      qty,
+    });
+    toast.success("Product Successfully Added to Your Cart!");
+    setShowQtyModal(false);
   };
 
   return (
     <div
-      className="border rounded-lg mx-1 md:mx-0"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      ref={cardRef}
+      className={`product-card-appear group/card ${isVisible ? "is-visible" : ""}`}
+      style={{ animationDelay: `${Math.min(index, 11) * 110}ms` }}
     >
-      <Link to={`/productDetails/${product?._id}`}>
-        <div className="relative min-w-full h-[140px] md:h-[200px]">
+      <Link to={`/productDetails/${product?._id}`} className="block">
+        <div className="relative w-full aspect-square overflow-hidden bg-gray-100">
           <img
-            className="w-full rounded-t-lg h-[140px] md:h-[200px] object-cover"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-105"
             src={product?.productThumbnail}
-            alt=""
+            alt={product?.name}
+            loading="lazy"
           />
-          <div className="overlay h-full hover-effect z-40 absolute inset-0 flex items-center justify-center">
-            <div className="absolute top-0 left-0">
-              {product?.hasOffer && daysLeft !== null && daysLeft >= 0 && (
-                <div className="bg-slate-900 text-white px-1 py-0.5 md:px-2 md:py-1 rounded-r-box text-xs md:text-sm font-medium">
-                  Offer Available - {daysLeft} day{daysLeft > 1 ? "s" : ""} left
-                </div>
-              )}
-              {product?.hasOffer && daysLeft === null && (
-                <div className="bg-slate-900 text-white px-1 py-0.5 md:px-2 md:py-1 rounded-r-box text-xs md:text-sm font-medium">
-                  Offer Available
-                </div>
-              )}
-            </div>
-            <div className="absolute bottom-0 right-0">
-              {(!product?.stock || product?.stock < 1) && (
-                <div className="bg-slate-900 text-white px-1 py-0.5 md:px-2 md:py-1 rounded-l-box text-xs md:text-sm font-medium">
-                  Out of Stock
-                </div>
-              )}
-              {product?.stock >= 1 && product?.stock <= product?.panicStock && (
-                <div className="bg-slate-900 text-white px-1 py-0.5 md:px-2 md:py-1 rounded-l-box text-xs md:text-sm font-medium">
-                  Only {product?.stock} available
-                </div>
-              )}
-            </div>
-            <div
-              className={`text-white z-50 text-sm md:text-lg transition-opacity ${
-                isHovered ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              {product?.specialLines.map((sl) => (
-                <p key={sl} className="py-0.5 md:py-1 text-center">
-                  {sl}
-                </p>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="p-1 md:p-2 h-[100px] md:h-[150px] flex flex-col justify-between">
-          <h3 className="text-sm md:text-2xl text-center">{product?.name}</h3>
-          {user?.user?.userView === "BC" && <h4 className="text-xs md:text-xl text-center">Price: {product?.priceBC}/-</h4>}
-          {user?.user?.userView === "MC" && <h4 className="text-xs md:text-xl text-center">Price: {product?.priceMC}/-</h4>}
-          {(!user || user?.user?.userView === "FC") && <h4 className="text-xs md:text-xl text-center">Price: {product?.priceFC}/-</h4>}
-          {user?.user?.userView === "SC" && <h4 className="text-xs md:text-xl text-center">Price: {product?.priceSC}/-</h4>}
-        </div>
-      </Link>
-      {user?.user?._id && (
-        <>
-          <button
-            onClick={handleAddToCartClick}
-            className="bg-[#212121] rounded-b-lg p-1 md:p-2 text-white mt-2 md:mt-4 text-sm md:text-xl w-full"
-          >
-            Add to Cart
-          </button>
-          {showQtyModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-              <div className="bg-white rounded-lg shadow-lg p-6 w-80 relative">
-                <button
-                  className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-                  onClick={() => setShowQtyModal(false)}
-                >
-                  &times;
-                </button>
-                <h2 className="text-xl font-semibold mb-4 text-center">Select Quantity</h2>
-                <div className="mb-4 flex flex-col items-center">
-                  <div className="flex items-center">
-                    <button
-                      className="px-2 py-1 bg-gray-200 rounded-l text-xl"
-                      onClick={handleDecrement}
-                      disabled={qty <= 1}
-                      type="button"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min={1}
-                      max={product.stock}
-                      value={qty}
-                      onChange={handleQtyChange}
-                      className="border-t border-b border-gray-300 px-3 py-2 w-16 text-center focus:outline-none"
-                      style={{ borderLeft: 'none', borderRight: 'none' }}
-                    />
-                    <button
-                      className="px-2 py-1 bg-gray-200 rounded-r text-xl"
-                      onClick={handleIncrement}
-                      disabled={qty >= product.stock}
-                      type="button"
-                    >
-                      +
-                    </button>
-                  </div>
-                  <span className="text-sm text-gray-500 mt-1">Available: {product.stock}</span>
-                  {qtyError && <span className="text-red-500 text-xs mt-1">{qtyError}</span>}
-                </div>
-                <button
-                  className="bg-[#212121] text-white px-4 py-2 rounded w-full disabled:opacity-50"
-                  onClick={handleConfirmAddToCart}
-                  disabled={qty < 1 || qty > product.stock}
-                >
-                  Confirm
-                </button>
+          <div className="gradient-overlay absolute inset-0 pointer-events-none" />
+
+          {/* Offer badge */}
+          {product?.hasOffer && (
+            <div className="absolute top-3 left-0 z-20">
+              <div className="bg-gray-900 text-white px-2.5 py-1 text-[10px] md:text-xs font-medium tracking-wide">
+                {daysLeft !== null && daysLeft >= 0
+                  ? `Offer · ${daysLeft} day${daysLeft !== 1 ? "s" : ""} left`
+                  : "Offer Available"}
               </div>
             </div>
           )}
-        </>
+
+          {/* Stock badge */}
+          {(outOfStock || lowStock) && (
+            <div className="absolute top-3 right-0 z-20">
+              <div className="bg-gray-900 text-white px-2.5 py-1 text-[10px] md:text-xs font-medium tracking-wide">
+                {outOfStock
+                  ? "Out of Stock"
+                  : `Only ${product.stock} left`}
+              </div>
+            </div>
+          )}
+
+          {/* Default name strip */}
+          <div className="absolute bottom-3 left-3 right-3 z-10 transition-opacity duration-400 group-hover/card:opacity-0">
+            <div className="bg-white/95 backdrop-blur-sm px-3 py-1.5">
+              <h3 className="text-gray-800 text-sm md:text-base font-semibold text-center truncate">
+                {product?.name}
+              </h3>
+            </div>
+          </div>
+
+          {/* Hover overlay — homepage style */}
+          <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 transition-all duration-400 group-hover/card:opacity-100 z-10">
+            <div className="text-center transform translate-y-4 group-hover/card:translate-y-0 transition-transform duration-400 px-3">
+              <h3 className="text-white text-base md:text-lg font-bold mb-2">
+                {product?.name}
+              </h3>
+              {product?.specialLines?.length > 0 && (
+                <div className="mb-3 space-y-0.5">
+                  {product.specialLines.slice(0, 3).map((sl) => (
+                    <p key={sl} className="text-white/85 text-xs md:text-sm">
+                      {sl}
+                    </p>
+                  ))}
+                </div>
+              )}
+              <div className="inline-block px-4 py-2 border border-white text-white font-semibold hover:bg-white hover:text-black transition-all duration-300 text-xs md:text-sm">
+                View Product
+              </div>
+            </div>
+          </div>
+        </div>
+      </Link>
+
+      {/* Price + cart — below image */}
+      <div className="pt-3 pb-1 flex flex-col gap-2.5">
+        <div className="flex items-baseline justify-between gap-2 px-0.5">
+          <h3 className="text-sm md:text-base font-semibold text-gray-900 truncate">
+            {product?.name}
+          </h3>
+          <p className="text-sm md:text-base font-bold text-gray-900 whitespace-nowrap">
+            Tk. {price}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleAddToCartClick}
+          disabled={outOfStock}
+          className="w-full px-4 py-2.5 bg-gray-900 border border-gray-900 text-white text-sm font-medium hover:bg-white hover:text-gray-900 transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900 disabled:hover:text-white"
+        >
+          {outOfStock ? "Out of Stock" : "Add to Cart"}
+        </button>
+      </div>
+
+      {showQtyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white p-6 w-80 relative shadow-2xl">
+            <button
+              type="button"
+              className="absolute top-2 right-3 text-gray-400 hover:text-gray-800 text-2xl leading-none"
+              onClick={() => setShowQtyModal(false)}
+            >
+              &times;
+            </button>
+            <h2 className="text-lg font-semibold mb-1 text-center text-gray-900">
+              Select Quantity
+            </h2>
+            <p className="text-center text-sm text-gray-500 mb-4 truncate px-4">
+              {product?.name}
+            </p>
+            <div className="mb-4 flex flex-col items-center">
+              <div className="flex items-center border border-gray-200">
+                <button
+                  className="px-3 py-2 bg-gray-50 hover:bg-gray-100 text-xl transition-colors"
+                  onClick={handleDecrement}
+                  disabled={qty <= 1}
+                  type="button"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min={1}
+                  max={product.stock}
+                  value={qty}
+                  onChange={handleQtyChange}
+                  className="px-3 py-2 w-16 text-center focus:outline-none border-x border-gray-200"
+                />
+                <button
+                  className="px-3 py-2 bg-gray-50 hover:bg-gray-100 text-xl transition-colors"
+                  onClick={handleIncrement}
+                  disabled={qty >= product.stock}
+                  type="button"
+                >
+                  +
+                </button>
+              </div>
+              <span className="text-sm text-gray-500 mt-2">
+                Available: {product.stock}
+              </span>
+              {qtyError && (
+                <span className="text-red-500 text-xs mt-1">{qtyError}</span>
+              )}
+            </div>
+            <button
+              type="button"
+              className="bg-gray-900 border border-gray-900 text-white px-4 py-2.5 w-full font-medium hover:bg-white hover:text-gray-900 transition-colors duration-300 disabled:opacity-50"
+              onClick={handleConfirmAddToCart}
+              disabled={qty < 1 || qty > product.stock}
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

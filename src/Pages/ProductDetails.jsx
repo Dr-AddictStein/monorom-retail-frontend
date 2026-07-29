@@ -1,17 +1,32 @@
-import axios from "axios";
 import { useEffect, useState } from "react";
-import { FaRegHeart, FaRegStar, FaStar } from "react-icons/fa";
+import { FaRegStar, FaStar, FaYoutube } from "react-icons/fa";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthContext } from "../hooks/useAuthContext";
-import offerImg from "../../public/offer-removebg-preview.png";
-import outOfStockImg from "../../public/out of stock.png";
+import { useCart } from "../context/CartContext";
 import LoginModal from "../Components/LoginModal";
 import SignupModal from "../Components/SignupModal";
 
+const getUnitPrice = (product, user) => {
+  if (user?.user?.userView === "BC") return product?.priceBC;
+  if (user?.user?.userView === "MC") return product?.priceMC;
+  if (user?.user?.userView === "SC") return product?.priceSC;
+  return product?.priceFC;
+};
+
+const buildCartItem = (product, qty, user, categoryName = "") => ({
+  productId: product._id,
+  name: product.name,
+  image: product.productThumbnail,
+  category: categoryName,
+  price: getUnitPrice(product, user),
+  qty,
+});
+
 const ProductDetails = () => {
   const { user } = useAuthContext();
+  const { addItem, buyNow } = useCart();
   const navigate = useNavigate();
   const { id } = useParams();
   const [product, setProduct] = useState(null);
@@ -19,8 +34,12 @@ const ProductDetails = () => {
   const [addedToCart, setAddedToCart] = useState(false);
   const [category, setCategory] = useState(null);
   const [products, setProducts] = useState(null);
-
   const [quantity, setQuantity] = useState(1);
+  const [activeTab, setActiveTab] = useState(1);
+  const [daysLeft, setDaysLeft] = useState(null);
+  const [isLoginOpen, setLoginOpen] = useState(false);
+  const [isSignupOpen, setSignupOpen] = useState(false);
+  const [imageKey, setImageKey] = useState(0);
 
   const increaseQuantity = () => {
     if (product.stock - quantity > 0) setQuantity((prev) => prev + 1);
@@ -36,16 +55,15 @@ const ProductDetails = () => {
 
   const handleQuantityChange = (e) => {
     const value = e.target.value;
-    
-    // Allow empty field during typing
-    if (value === '') {
-      setQuantity('');
+
+    if (value === "") {
+      setQuantity("");
       return;
     }
-    
+
     const numValue = parseInt(value);
     if (isNaN(numValue)) return;
-    
+
     if (numValue > product.stock) {
       setQuantity(product.stock);
       toast.error(`Cannot exceed available stock (${product.stock})`);
@@ -58,9 +76,8 @@ const ProductDetails = () => {
     }
   };
 
-  // Handle blur to ensure valid value when user finishes typing
   const handleQuantityBlur = () => {
-    if (quantity === '') {
+    if (quantity === "") {
       const minQuantity = product?.stock <= 0 ? 0 : 1;
       setQuantity(minQuantity);
     } else if (quantity < 0) {
@@ -79,8 +96,8 @@ const ProductDetails = () => {
       const data = await response.json();
       setProduct(data);
       setSelectedImage(data.productThumbnail);
+      setImageKey((k) => k + 1);
       setAddedToCart(false);
-      // Set initial quantity based on stock availability
       setQuantity(data.stock <= 0 ? 0 : 1);
     } catch (error) {
       console.error("Error fetching product:", error);
@@ -100,266 +117,279 @@ const ProductDetails = () => {
     }
   };
 
-  const fetchRelatedProducts = async () => {
+  const fetchRelatedProducts = async (currentProduct) => {
+    const categoryId =
+      currentProduct?.category?.toString?.() || currentProduct?.category;
+    if (!categoryId) {
+      setProducts([]);
+      return;
+    }
+
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/getProductsByCategoryId/${product.category}`
+        `${import.meta.env.VITE_BACKEND_URL}/api/product/getProductsByCategoryId/${categoryId}`
       );
       if (!response.ok) throw new Error("Failed to fetch related products");
       const data = await response.json();
-      const dex = data.filter((item) => item._id !== product._id);
-      setProducts(dex);
+      const related = (Array.isArray(data) ? data : []).filter(
+        (item) => String(item._id) !== String(currentProduct._id)
+      );
+      setProducts(related);
     } catch (error) {
       console.error("Error fetching products:", error);
+      setProducts([]);
     }
   };
 
   useEffect(() => {
     if (id) {
+      setProducts(null);
+      setCategory(null);
       fetchProduct();
+      window.scrollTo({ top: 0, behavior: "auto" });
     }
   }, [id]);
 
   useEffect(() => {
-    if (product) {
+    if (product?._id) {
       fetchCategory();
-      fetchRelatedProducts();
+      fetchRelatedProducts(product);
     }
-  }, [product]);
-
-  const [isLoginOpen, setLoginOpen] = useState(false);
-  const [isSignupOpen, setSignupOpen] = useState(false);
+  }, [product?._id, product?.category]);
 
   useEffect(() => {
     if (user?.user?._id) {
       setLoginOpen(false);
       setSignupOpen(false);
     }
-  }, [user?.user?._id])
+  }, [user?.user?._id]);
 
-  const handleAddToCart = async (e) => {
-    e.preventDefault();
-    if (!user?.user?._id) {
-      setLoginOpen(true);
-      return;
-    }
-    
-    // Check if product is out of stock or quantity is 0
-    if (product?.stock <= 0 || quantity <= 0) {
-      toast.error("Product is out of stock!");
-      return;
-    }
-    
-    const data = { userId: user?.user?._id, productId: product?._id, qty: quantity };
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/cart/addToCart/${user?.user?._id
-        }`,
-        data
-      );
-      if (response.status === 200) {
-        toast.success("Product successfully added to your cart!");
-        setAddedToCart(true);
-      } else {
-        toast.error("Failed to add product to cart.");
-      }
-    } catch (error) {
-      toast.error("Error adding to cart: " + error.message);
-    }
-  };
-
-  const handleBuyNow = async (e) => {
-    e.preventDefault();
-    if (!user?.user?._id) {
-      setLoginOpen(true);
-      return;
-    }
-    
-    // Check if product is out of stock or quantity is 0
-    if (product?.stock <= 0 || quantity <= 0) {
-      toast.error("Product is out of stock!");
-      return;
-    }
-    
-    const data = { userId: user?.user?._id, productId: product?._id };
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/cart/buyNow/${user?.user?._id
-        }`,
-        data
-      );
-      if (response.status === 200) {
-        toast.success("Product successfully added to your cart!");
-        navigate("/dashboard/user/cart");
-      } else {
-        toast.error("Failed to add product to cart.");
-      }
-    } catch (error) {
-      toast.error("Error adding to cart: " + error.message);
-    }
-  };
-
-  const [activeTab, setActiveTab] = useState(1);
-
-
-  const [daysLeft, setDaysLeft] = useState(null);
-
-  // Function to calculate the days left until offerTill
-  const calculateDaysLeft = () => {
+  useEffect(() => {
     if (product?.offerPanicStarts) {
       const today = new Date();
       const offerTill = new Date(product?.offerTill);
       const offerPanicStarts = new Date(product?.offerPanicStarts);
 
-      // Check if today's date is greater than or equal to offerPanicStarts
       if (today >= offerPanicStarts) {
         const timeDiff = offerTill - today;
-        const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
-        setDaysLeft(daysRemaining);
+        setDaysLeft(Math.ceil(timeDiff / (1000 * 3600 * 24)));
       } else {
-        setDaysLeft(null); // No days left if the panic period hasn't started yet
+        setDaysLeft(null);
       }
+    } else {
+      setDaysLeft(null);
     }
-  };
-
-  useEffect(() => {
-    calculateDaysLeft();
   }, [product]);
 
+  const handleSelectImage = (im) => {
+    if (im === selectedImage) return;
+    setSelectedImage(im);
+    setImageKey((k) => k + 1);
+  };
 
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+
+    if (product?.stock <= 0 || quantity <= 0) {
+      toast.error("Product is out of stock!");
+      return;
+    }
+
+    addItem(
+      buildCartItem(product, quantity, user, category?.name || "")
+    );
+    toast.success("Product successfully added to your cart!");
+    setAddedToCart(true);
+  };
+
+  const handleBuyNow = (e) => {
+    e.preventDefault();
+
+    if (product?.stock <= 0 || quantity <= 0) {
+      toast.error("Product is out of stock!");
+      return;
+    }
+
+    buyNow(buildCartItem(product, quantity, user, category?.name || ""));
+    toast.success("Ready to checkout!");
+    navigate("/user/cart");
+  };
+
+  const unitPrice = getUnitPrice(product, user);
+  const displayPrice =
+    product?.stock <= 0 ? unitPrice : unitPrice * (Number(quantity) || 0);
+  const outOfStock = product?.stock <= 0;
+  const lowStock =
+    product?.stock > 0 && product?.stock <= product?.panicStock;
+  const gallery = product?.galleryImages?.length
+    ? product.galleryImages
+    : product?.productThumbnail
+      ? [product.productThumbnail]
+      : [];
 
   return (
-    <div className="max-w-5xl mx-auto py-8 pt-[13%]  md:pt-[8%]">
+    <div key={id} className="max-w-7xl mx-auto px-4 md:px-6 pb-10 md:pb-14 pt-40 md:pt-48">
       <ToastContainer />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 relative p-10 rounded-lg bg-slate-100 shadow-lg">
-        <div className="relative">
-          <div className=" absolute ">
-            {product?.hasOffer && daysLeft !== null && daysLeft >= 0 && (
-              <div className="bg-slate-900 text-white px-2 py-1 rounded-r-box font-medium">
-                Offer Available - {daysLeft} day{daysLeft > 1 ? "s" : ""} left
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
+        {/* Gallery */}
+        <div className="pd-gallery-enter">
+          <div className="relative w-full aspect-square overflow-hidden bg-gray-100">
+            {selectedImage && (
+              <img
+                key={imageKey}
+                className="pd-main-image w-full h-full object-cover"
+                src={selectedImage}
+                alt={product?.name}
+              />
+            )}
+            <div className="gradient-overlay absolute inset-0 pointer-events-none" />
+
+            {product?.hasOffer && (
+              <div className="absolute top-4 left-0 z-20">
+                <div className="bg-gray-900 text-white px-3 py-1.5 text-xs md:text-sm font-medium tracking-wide">
+                  {daysLeft !== null && daysLeft >= 0
+                    ? `Offer · ${daysLeft} day${daysLeft !== 1 ? "s" : ""} left`
+                    : "Offer Available"}
+                </div>
               </div>
             )}
-            {product?.hasOffer && daysLeft === null && (
-              <div className="bg-slate-900 text-white px-2 py-1 rounded-r-box font-medium">
-                Offer Available
+
+            {(outOfStock || lowStock) && (
+              <div className="absolute top-4 right-0 z-20">
+                <div className="bg-gray-900 text-white px-3 py-1.5 text-xs md:text-sm font-medium tracking-wide">
+                  {outOfStock
+                    ? "Out of Stock"
+                    : `Only ${product?.stock} left`}
+                </div>
               </div>
             )}
           </div>
-          <div className=" absolute right-0 ">
-            {(product?.stock <= product?.panicStock) &&
-              <div className="bg-slate-900 text-white px-2 py-1 rounded-l-box font-medium">
-                Only {product?.stock} available
-              </div>
-            }
-          </div>
-          <img
-            className="w-full h-[340px] object-cover rounded-lg shadow-lg mb-4"
-            src={selectedImage}
-            alt={product?.name}
-          />
-          <div className="flex justify-center mt-2 space-x-2">
-            {product?.galleryImages?.slice(0, 4).map((im) => (
-              <div
-                key={im}
-                className="w-24 h-16 border rounded cursor-pointer overflow-hidden transition-transform transform hover:scale-105"
-                onClick={() => setSelectedImage(im)}
-              >
-                <img
-                  className="w-full h-full object-cover"
-                  src={im}
-                  alt="Product Thumbnail"
-                />
-              </div>
-            ))}
-          </div>
-          {
-            product?.youtubeURL &&
-            <div className="text-center my-8 text-xl flex justify-center items-center">
-              <a href={`${product?.youtubeURL}`} target="_blank" rel="noopener noreferrer" className="flex justify-center w-[75px]">
-                <svg fill="#000000" height="75px" width="75px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 310 310" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g id="XMLID_822_"> <path id="XMLID_823_" d="M297.917,64.645c-11.19-13.302-31.85-18.728-71.306-18.728H83.386c-40.359,0-61.369,5.776-72.517,19.938 C0,79.663,0,100.008,0,128.166v53.669c0,54.551,12.896,82.248,83.386,82.248h143.226c34.216,0,53.176-4.788,65.442-16.527 C304.633,235.518,310,215.863,310,181.835v-53.669C310,98.471,309.159,78.006,297.917,64.645z M199.021,162.41l-65.038,33.991 c-1.454,0.76-3.044,1.137-4.632,1.137c-1.798,0-3.592-0.484-5.181-1.446c-2.992-1.813-4.819-5.056-4.819-8.554v-67.764 c0-3.492,1.822-6.732,4.808-8.546c2.987-1.814,6.702-1.938,9.801-0.328l65.038,33.772c3.309,1.718,5.387,5.134,5.392,8.861 C204.394,157.263,202.325,160.684,199.021,162.41z"></path> </g> </g></svg>
-              </a>
+
+          {gallery.length > 0 && (
+            <div className="flex gap-3 mt-4 overflow-x-auto scrollbar-hide pb-1">
+              {gallery.slice(0, 6).map((im, idx) => {
+                const active = selectedImage === im;
+                return (
+                  <button
+                    key={`${im}-${idx}`}
+                    type="button"
+                    onClick={() => handleSelectImage(im)}
+                    className={`pd-thumb relative flex-shrink-0 w-20 h-20 md:w-24 md:h-24 overflow-hidden transition-all duration-300 ${
+                      active
+                        ? "ring-2 ring-gray-900 ring-offset-2"
+                        : "opacity-70 hover:opacity-100"
+                    }`}
+                    style={{ animationDelay: `${idx * 80}ms` }}
+                  >
+                    <img
+                      className="w-full h-full object-cover"
+                      src={im}
+                      alt={`${product?.name} view ${idx + 1}`}
+                    />
+                  </button>
+                );
+              })}
             </div>
-          }
+          )}
+
+          {product?.youtubeURL && (
+            <a
+              href={product.youtubeURL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 inline-flex items-center gap-2 text-gray-800 hover:text-red-600 transition-colors duration-300"
+            >
+              <FaYoutube className="text-3xl text-red-600" />
+              <span className="text-sm font-medium tracking-wide uppercase">
+                Watch video
+              </span>
+            </a>
+          )}
         </div>
-        <div className="flex flex-col justify-between">
-          <div>
-            <p className="pb-4 text-sm text-gray-500">
-              <Link
-                to={`/category/${category?._id}`}
-                className="hover:text-blue-500 cursor-pointer"
-              >
-                {category?.name}
-              </Link>
-            </p>
-            <h3 className="text-3xl font-bold text-center">{product?.name}</h3>
-            <p className="text-sm  text-center pt-4">Code: {product?.productCode}</p>
-            <div className="pt-5">
-              {product?.specialLines?.map((sl, index) => (
-                <p className="text-center text-lg text-gray-700" key={index}>
+
+        {/* Product info */}
+        <div className="pd-info-enter flex flex-col min-h-0 lg:min-h-[520px]">
+          <p className="text-sm tracking-wide text-gray-500 mb-3">
+            <Link
+              to={`/category/${category?._id}`}
+              className="hover:text-gray-900 transition-colors"
+            >
+              {category?.name || "Category"}
+            </Link>
+          </p>
+
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
+            {product?.name}
+          </h1>
+
+          <p className="mt-3 text-sm text-gray-500">
+            Code: {product?.productCode}
+          </p>
+
+          {product?.specialLines?.length > 0 && (
+            <div className="mt-6 space-y-1.5 border-l-2 border-gray-900 pl-4">
+              {product.specialLines.map((sl, index) => (
+                <p className="text-gray-700 text-base md:text-lg" key={index}>
                   {sl}
                 </p>
               ))}
             </div>
-          </div>
-          <div className="text-xl text-right">
-            {user?.user?.userView === "BC" && (
-              <h3 className="text-2xl pt-2 pb-4 text-center">
-                tk {product?.stock <= 0 ? product?.priceBC : product?.priceBC * quantity}/-
-              </h3>
-            )}
-            {user?.user?.userView === "MC" && (
-              <h3 className="text-2xl pt-2 pb-4 text-center">
-                tk {product?.stock <= 0 ? product?.priceMC : product?.priceMC * quantity}/-
-              </h3>
-            )}
-            {(!user || user?.user?.userView === "FC") && (
-              <h3 className="text-2xl pt-2 pb-4 text-center">
-                tk {product?.stock <= 0 ? product?.priceFC : product?.priceFC * quantity}/-
-              </h3>
-            )}
-            {user?.user?.userView === "SC" && (
-              <h3 className="text-2xl pt-2 pb-4 text-center">
-                tk {product?.stock <= 0 ? product?.priceSC : product?.priceSC * quantity}/-
-              </h3>
-            )}
-            <div className="flex items-center justify-center mb-4">
-              <button
-                className="px-4 py-2 bg-gray-200 rounded-l-lg hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                onClick={decreaseQuantity}
-                disabled={quantity <= (product?.stock <= 0 ? 0 : 1)}
-              >
-                -
-              </button>
-              <input
-                type="text"
-                className="px-2 py-2 w-16 bg-white border-t border-b text-center"
-                value={quantity}
-                onChange={handleQuantityChange}
-                onBlur={handleQuantityBlur}
-                min="0"
-                max={product?.stock}
-              />
-              <button
-                className="px-4 py-2 bg-gray-200 rounded-r-lg hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                onClick={increaseQuantity}
-                disabled={product?.stock <= 0 || quantity >= product?.stock}
-              >
-                +
-              </button>
+          )}
+
+          <div className="mt-auto pt-10">
+            <p className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              Tk. {displayPrice ?? "—"}
+            </p>
+
+            <div className="flex items-center gap-3 mb-5">
+              <span className="text-sm text-gray-500 uppercase tracking-wider">
+                Qty
+              </span>
+              <div className="flex items-center border border-gray-300">
+                <button
+                  type="button"
+                  className="px-4 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors disabled:opacity-40"
+                  onClick={decreaseQuantity}
+                  disabled={quantity <= (product?.stock <= 0 ? 0 : 1)}
+                >
+                  −
+                </button>
+                <input
+                  type="text"
+                  className="w-14 py-2.5 text-center focus:outline-none border-x border-gray-300"
+                  value={quantity}
+                  onChange={handleQuantityChange}
+                  onBlur={handleQuantityBlur}
+                />
+                <button
+                  type="button"
+                  className="px-4 py-2.5 bg-gray-50 hover:bg-gray-100 transition-colors disabled:opacity-40"
+                  onClick={increaseQuantity}
+                  disabled={product?.stock <= 0 || quantity >= product?.stock}
+                >
+                  +
+                </button>
+              </div>
+              {!outOfStock && (
+                <span className="text-sm text-gray-400">
+                  {product?.stock} available
+                </span>
+              )}
             </div>
-            <div className="flex flex-col gap-2">
+
+            <div className="flex flex-col sm:flex-row gap-3">
               {addedToCart ? (
                 <Link
-                  className="flex justify-center"
-                  to={"/dashboard/user/cart"}
+                  to="/user/cart"
+                  className="flex-1 text-center px-6 py-3 border border-gray-900 bg-white text-gray-900 font-medium hover:bg-gray-900 hover:text-white transition-colors duration-300"
                 >
-                  <button className="bg-[#f2f1f1] text-black rounded-full px-4 py-2 transition-colors duration-200 hover:bg-gray-300">
-                    Added to Cart, Go to Your Cart
-                  </button>
+                  Go to Cart
                 </Link>
               ) : (
                 <button
-                  className="bg-[#f2f1f1] text-black rounded-full px-4 py-2 transition-colors duration-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
+                  type="button"
+                  className="flex-1 px-6 py-3 border border-gray-900 bg-white text-gray-900 font-medium hover:bg-gray-900 hover:text-white transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-gray-900"
                   onClick={handleAddToCart}
                   disabled={quantity <= 0 || product?.stock <= 0}
                 >
@@ -367,7 +397,8 @@ const ProductDetails = () => {
                 </button>
               )}
               <button
-                className="bg-[#212121] text-white rounded-full px-4 py-2 transition-colors duration-200 hover:bg-[#0681c3] disabled:bg-gray-400 disabled:cursor-not-allowed"
+                type="button"
+                className="flex-1 px-6 py-3 bg-gray-900 border border-gray-900 text-white font-medium hover:bg-white hover:text-gray-900 transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900 disabled:hover:text-white"
                 onClick={handleBuyNow}
                 disabled={quantity <= 0 || product?.stock <= 0}
               >
@@ -378,57 +409,82 @@ const ProductDetails = () => {
         </div>
       </div>
 
-      <div className="text-2xl flex justify-center gap-10 my-10">
-        <h4
-          onClick={() => setActiveTab(1)}
-          className={`cursor-pointer ${activeTab === 1 ? "text-[#0681c3] font-semibold" : "text-gray-600"
+      {/* Tabs */}
+      <div className="pd-section-enter mt-16 md:mt-20">
+        <div className="flex justify-center gap-10 border-b border-gray-200">
+          <button
+            type="button"
+            onClick={() => setActiveTab(1)}
+            className={`pb-3 text-lg transition-colors relative ${
+              activeTab === 1
+                ? "text-gray-900 font-semibold"
+                : "text-gray-400 hover:text-gray-700"
             }`}
-        >
-          Description
-        </h4>
-        <h4
-          onClick={() => setActiveTab(2)}
-          className={`cursor-pointer ${activeTab === 2 ? "text-[#0681c3] font-semibold" : "text-gray-600"
+          >
+            Description
+            {activeTab === 1 && (
+              <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-gray-900" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab(2)}
+            className={`pb-3 text-lg transition-colors relative ${
+              activeTab === 2
+                ? "text-gray-900 font-semibold"
+                : "text-gray-400 hover:text-gray-700"
             }`}
-        >
-          Reviews (0)
-        </h4>
-      </div>
-      {activeTab === 1 && (
-        <div className="text-lg text-gray-700 text-center">
-          <p>
-            {product?.desc}
-          </p>
+          >
+            Reviews (0)
+            {activeTab === 2 && (
+              <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-gray-900" />
+            )}
+          </button>
         </div>
-      )}
-      {activeTab === 2 && (
-        <div className="text-lg text-gray-700 text-center">
-          <p>There are no reviews yet</p>
-          <div className="pt-10">
-            <div className="text-xl flex gap-1 pb-4 justify-center">
-              <FaStar className="text-yellow-400" />
-              <FaStar className="text-yellow-400" />
-              <FaStar className="text-yellow-400" />
-              <FaStar className="text-yellow-400" />
-              <FaRegStar className="text-gray-300" />
+
+        <div className="py-10 max-w-3xl mx-auto text-center">
+          {activeTab === 1 && (
+            <p className="text-base md:text-lg text-gray-600 leading-relaxed whitespace-pre-line">
+              {product?.desc || "No description available."}
+            </p>
+          )}
+          {activeTab === 2 && (
+            <div>
+              <p className="text-gray-500 mb-6">There are no reviews yet</p>
+              <div className="flex gap-1 justify-center pb-3 text-xl">
+                <FaStar className="text-yellow-400" />
+                <FaStar className="text-yellow-400" />
+                <FaStar className="text-yellow-400" />
+                <FaStar className="text-yellow-400" />
+                <FaRegStar className="text-gray-300" />
+              </div>
+              <h5 className="text-lg font-semibold text-gray-900">
+                Be the first to review this product
+              </h5>
             </div>
-            <h5 className="text-xl font-semibold">
-              Be the first to review this product
-            </h5>
-          </div>
+          )}
         </div>
-      )}
-      {products && (
-        <div className="my-16">
-          <h4 className="text-2xl text-center pb-5">Related Products</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((relatedProduct) => (
-              <RelatedProductCard key={relatedProduct._id} product={relatedProduct} user={user} />
+      </div>
+
+      {/* Related */}
+      {products?.length > 0 && (
+        <div className="pd-section-enter my-8 md:my-12">
+          <h4 className="text-2xl md:text-3xl font-bold text-left text-gray-900 pb-8">
+            Related Products
+          </h4>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {products.slice(0, 8).map((relatedProduct, index) => (
+              <RelatedProductCard
+                key={relatedProduct._id}
+                product={relatedProduct}
+                user={user}
+                index={index}
+                categoryName={category?.name || ""}
+              />
             ))}
           </div>
         </div>
-      )
-      }
+      )}
 
       <LoginModal
         isOpen={isLoginOpen}
@@ -446,19 +502,27 @@ const ProductDetails = () => {
           setLoginOpen(true);
         }}
       />
-    </div >
+    </div>
   );
 };
 
 export default ProductDetails;
 
-const RelatedProductCard = ({ product, user }) => {
+const RelatedProductCard = ({ product, user, index = 0, categoryName = "" }) => {
+  const { addItem } = useCart();
   const [showQtyModal, setShowQtyModal] = useState(false);
   const [qty, setQty] = useState(1);
   const [qtyError, setQtyError] = useState("");
+  const outOfStock = !product?.stock || product.stock < 1;
+  const price = getUnitPrice(product, user);
 
   const handleAddToCartClick = (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    if (outOfStock) {
+      toast.error("This product is out of stock.");
+      return;
+    }
     setQty(1);
     setQtyError("");
     setShowQtyModal(true);
@@ -480,11 +544,7 @@ const RelatedProductCard = ({ product, user }) => {
   };
 
   const handleDecrement = () => {
-    setQty((prev) => {
-      const newQty = prev - 1;
-      if (newQty < 1) return 1;
-      return newQty;
-    });
+    setQty((prev) => Math.max(1, prev - 1));
     setQtyError("");
   };
 
@@ -500,119 +560,147 @@ const RelatedProductCard = ({ product, user }) => {
     setQtyError("");
   };
 
-  const handleConfirmAddToCart = async () => {
+  const handleConfirmAddToCart = () => {
     if (qty < 1 || qty > product.stock) {
       setQtyError(`Please enter a quantity between 1 and ${product.stock}`);
       return;
     }
-    if (!user?.user?._id) {
-      toast.error("Please login to add to cart.");
-      return;
-    }
-    const data = { userId: user?.user?._id, productId: product._id, qty };
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/cart/addToCart/` + user?.user?._id,
-        data
-      );
-      if (response.status === 200) {
-        toast.success("Product Successfully Added to Your Cart!");
-        setShowQtyModal(false);
-      } else {
-        toast.error("Failed to add product to cart.");
-      }
-    } catch (error) {
-      toast.error("Error Adding to Cart: " + error.message);
-    }
+    addItem(buildCartItem(product, qty, user, categoryName));
+    toast.success("Product Successfully Added to Your Cart!");
+    setShowQtyModal(false);
   };
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200">
-      <Link to={`/productDetails/${product._id}`}>
-        <div className=" absolute top-0 left-0">
-          {product?.hasOffer &&
-            <img src={offerImg} alt="" className="w-24" />
-          }
-        </div>
-        <img
-          className="w-full h-[200px] object-cover rounded mb-4"
-          src={product.productThumbnail}
-          alt={product.name}
-        />
-        <h5 className="font-bold">{product.name}</h5>
-        {user?.user?.userView === "BC" && <p className="text-xl text-[#0681c3]">
-          tk {product.priceBC}/-
-        </p>}
-        {user?.user?.userView === "MC" && <p className="text-xl text-[#0681c3]">
-          tk {product.priceMC}/-
-        </p>}
-        {user?.user?.userView === "SC" && <p className="text-xl text-[#0681c3]">
-          tk {product.priceSC}/-
-        </p>}
-        {(!user || user?.user?.userView === "FC") && <p className="text-xl text-[#0681c3]">
-          tk {product.priceFC}/-
-        </p>}
-      </Link>
-      {user?.user?._id && (
-        <>
-          <button
-            onClick={handleAddToCartClick}
-            className="bg-[#212121] rounded-lg p-2 text-white mt-4 text-xl w-full"
-          >
-            Add to Cart
-          </button>
-          {showQtyModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-              <div className="bg-white rounded-lg shadow-lg p-6 w-80 relative">
-                <button
-                  className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-                  onClick={() => setShowQtyModal(false)}
-                >
-                  &times;
-                </button>
-                <h2 className="text-xl font-semibold mb-4 text-center">Select Quantity</h2>
-                <div className="mb-4 flex flex-col items-center">
-                  <div className="flex items-center">
-                    <button
-                      className="px-2 py-1 bg-gray-200 rounded-l text-xl"
-                      onClick={handleDecrement}
-                      disabled={qty <= 1}
-                      type="button"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min={1}
-                      max={product.stock}
-                      value={qty}
-                      onChange={handleQtyChange}
-                      className="border-t border-b border-gray-300 px-3 py-2 w-16 text-center focus:outline-none"
-                      style={{ borderLeft: 'none', borderRight: 'none' }}
-                    />
-                    <button
-                      className="px-2 py-1 bg-gray-200 rounded-r text-xl"
-                      onClick={handleIncrement}
-                      disabled={qty >= product.stock}
-                      type="button"
-                    >
-                      +
-                    </button>
-                  </div>
-                  <span className="text-sm text-gray-500 mt-1">Available: {product.stock}</span>
-                  {qtyError && <span className="text-red-500 text-xs mt-1">{qtyError}</span>}
-                </div>
-                <button
-                  className="bg-[#212121] text-white px-4 py-2 rounded w-full disabled:opacity-50"
-                  onClick={handleConfirmAddToCart}
-                  disabled={qty < 1 || qty > product.stock}
-                >
-                  Confirm
-                </button>
+    <div
+      className="product-card-appear is-visible group/card"
+      style={{ animationDelay: `${Math.min(index, 7) * 90}ms` }}
+    >
+      <Link to={`/productDetails/${product._id}`} className="block">
+        <div className="relative w-full aspect-square overflow-hidden bg-gray-100">
+          <img
+            className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-105"
+            src={product.productThumbnail}
+            alt={product.name}
+            loading="lazy"
+          />
+          <div className="gradient-overlay absolute inset-0 pointer-events-none" />
+
+          {product?.hasOffer && (
+            <div className="absolute top-3 left-0 z-20">
+              <div className="bg-gray-900 text-white px-2.5 py-1 text-[10px] md:text-xs font-medium">
+                Offer Available
               </div>
             </div>
           )}
-        </>
+
+          {outOfStock && (
+            <div className="absolute top-3 right-0 z-20">
+              <div className="bg-gray-900 text-white px-2.5 py-1 text-[10px] md:text-xs font-medium">
+                Out of Stock
+              </div>
+            </div>
+          )}
+
+          <div className="absolute bottom-3 left-3 right-3 z-10 transition-opacity duration-400 group-hover/card:opacity-0">
+            <div className="bg-white/95 backdrop-blur-sm px-3 py-1.5">
+              <h3 className="text-gray-800 text-sm md:text-base font-semibold text-center truncate">
+                {product.name}
+              </h3>
+            </div>
+          </div>
+
+          <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 transition-all duration-400 group-hover/card:opacity-100 z-10">
+            <div className="text-center transform translate-y-4 group-hover/card:translate-y-0 transition-transform duration-400 px-3">
+              <h3 className="text-white text-base md:text-lg font-bold mb-2">
+                {product.name}
+              </h3>
+              <div className="inline-block px-4 py-2 border border-white text-white font-semibold text-xs md:text-sm">
+                View Product
+              </div>
+            </div>
+          </div>
+        </div>
+      </Link>
+
+      <div className="pt-3 pb-1 flex flex-col gap-2.5">
+        <div className="flex items-baseline justify-between gap-2 px-0.5">
+          <h3 className="text-sm md:text-base font-semibold text-gray-900 truncate">
+            {product.name}
+          </h3>
+          <p className="text-sm md:text-base font-bold text-gray-900 whitespace-nowrap">
+            Tk. {price}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleAddToCartClick}
+          disabled={outOfStock}
+          className="w-full px-4 py-2.5 bg-gray-900 border border-gray-900 text-white text-sm font-medium hover:bg-white hover:text-gray-900 transition-colors duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900 disabled:hover:text-white"
+        >
+          {outOfStock ? "Out of Stock" : "Add to Cart"}
+        </button>
+      </div>
+
+      {showQtyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white p-6 w-80 relative shadow-2xl">
+            <button
+              type="button"
+              className="absolute top-2 right-3 text-gray-400 hover:text-gray-800 text-2xl leading-none"
+              onClick={() => setShowQtyModal(false)}
+            >
+              &times;
+            </button>
+            <h2 className="text-lg font-semibold mb-1 text-center text-gray-900">
+              Select Quantity
+            </h2>
+            <p className="text-center text-sm text-gray-500 mb-4 truncate px-4">
+              {product?.name}
+            </p>
+            <div className="mb-4 flex flex-col items-center">
+              <div className="flex items-center border border-gray-200">
+                <button
+                  className="px-3 py-2 bg-gray-50 hover:bg-gray-100 text-xl"
+                  onClick={handleDecrement}
+                  disabled={qty <= 1}
+                  type="button"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min={1}
+                  max={product.stock}
+                  value={qty}
+                  onChange={handleQtyChange}
+                  className="px-3 py-2 w-16 text-center focus:outline-none border-x border-gray-200"
+                />
+                <button
+                  className="px-3 py-2 bg-gray-50 hover:bg-gray-100 text-xl"
+                  onClick={handleIncrement}
+                  disabled={qty >= product.stock}
+                  type="button"
+                >
+                  +
+                </button>
+              </div>
+              <span className="text-sm text-gray-500 mt-2">
+                Available: {product.stock}
+              </span>
+              {qtyError && (
+                <span className="text-red-500 text-xs mt-1">{qtyError}</span>
+              )}
+            </div>
+            <button
+              type="button"
+              className="bg-gray-900 border border-gray-900 text-white px-4 py-2.5 w-full font-medium hover:bg-white hover:text-gray-900 transition-colors duration-300 disabled:opacity-50"
+              onClick={handleConfirmAddToCart}
+              disabled={qty < 1 || qty > product.stock}
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

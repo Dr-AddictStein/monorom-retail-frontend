@@ -410,31 +410,25 @@ const UserOrderDetails = () => {
     }, 1000);
   };
   if (!orderDetails) {
-    return <div>Loading...</div>; // You can replace this with a loading spinner or placeholder
-  }
-
-  if (!user) {
     return (
-      <div className="h-[100vh] flex flex-col justify-center gap-10">
-        <div className="text-5xl text-center">You are Not Logged in.!.</div>
-        <div className="text-3xl text-center">Please Sign Up</div>
-        <div className="flex justify-center gap-3">
-          <Link to={'/login'} className="px-3 py-2 bg-emerald-700 rounded-md text-xl text-white">
-            <button>Login</button>
-          </Link>
-          <Link to={'/signup'} className="px-3 py-2 bg-slate-700 rounded-md text-xl text-white">
-            <button>SignUp</button>
-          </Link>
-        </div>
+      <div className="min-h-screen flex items-center justify-center pt-32">
+        Loading...
       </div>
     );
   }
 
-
   return (
-    <div className="flex flex-col items-center p-6 bg-gray-100 min-h-screen">
+    <div className="flex flex-col items-center p-6 bg-gray-100 min-h-screen pt-32 md:pt-40">
       <div className="flex justify-between items-center w-full max-w-6xl mb-4">
-        <h2 className="text-2xl font-semibold">Order Details</h2>
+        <div className="flex items-center gap-4">
+          <Link
+            to="/user/orderHistory"
+            className="text-sm text-gray-600 hover:text-gray-900"
+          >
+            ← Back to Orders
+          </Link>
+          <h2 className="text-2xl font-semibold">Order Details</h2>
+        </div>
         <button
           onClick={handleGeneratePDF}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
