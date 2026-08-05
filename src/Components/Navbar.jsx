@@ -135,7 +135,7 @@ const Navbar = () => {
             {categories.map((category) => (
               <li key={category._id} className="py-2 px-4 hover:bg-gray-100">
                 <Link
-                  to={`/category/${category._id}`}
+                  to={`/category/${category.slug || category._id}`}
                   onClick={() => setShowCategories(false)}
                 >
                   {category.name}

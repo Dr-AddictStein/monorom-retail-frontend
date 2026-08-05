@@ -94,7 +94,7 @@ const Table = ({ data, rowsPerPage, onDelete, setIsModalOpen }) => {
                     </td>
                     <td className="p-4 text-center">
                       <div className="flex justify-center gap-2">
-                        <Link to={`/productDetails/${item.productId}`}>
+                        <Link to={`/productDetails/${item.slug || item.productId}`}>
                           <button
                             type="button"
                             className="px-3 py-1.5 bg-gray-900 text-white text-sm hover:bg-gray-700"

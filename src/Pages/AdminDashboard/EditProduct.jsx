@@ -3,7 +3,9 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Switch from "react-switch";
+import RichTextEditor from "../../Components/RichTextEditor";
 import { useAuthContext } from "../../hooks/useAuthContext";
+import { getProductPrice } from "../../utils/productPrice";
 import { uploadFile } from "../../utils/uploadFile";
 
 const EditProduct = () => {
@@ -17,11 +19,7 @@ const EditProduct = () => {
     galleryImages: [],
     category: "",
     price: "",
-    priceBC: "",
-    priceMC: "",
-    priceFC: "",
-    priceSC: "",
-    specialLines: [""], // Initialize with one input field
+    specialLines: [],
     productCode: "",
     youtubeURL: "",
     desc: "",
@@ -29,7 +27,7 @@ const EditProduct = () => {
     panicStock: 0,
     hasOffer: false,
     offerTill: "",
-    offerPanicStarts:""
+    offerPanicStarts: "",
   });
   const [preview, setPreview] = useState({
     bannerImage: null,
@@ -37,11 +35,12 @@ const EditProduct = () => {
     galleryImages: [],
   });
   const [categories, setCategories] = useState([]);
+  const [productLoaded, setProductLoaded] = useState(false);
 
   useEffect(() => {
     fetchCategories();
     fetchProduct();
-  }, []);
+  }, [id]);
 
   const fetchCategories = async () => {
     try {
@@ -56,22 +55,50 @@ const EditProduct = () => {
     }
   };
 
-
   const fetchProduct = async () => {
     try {
+      setProductLoaded(false);
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/product/${id}`
       );
       if (!response.ok) throw new Error("Failed to fetch product");
       const data = await response.json();
-      setFormData(data);
-      setPreview({
-        bannerImage: data.bannerImage,
-        productThumbnail: data.productThumbnail,
-        galleryImages: data.galleryImages.map((img) => img), // Initialize previews
+      const lines = Array.isArray(data.specialLines)
+        ? data.specialLines.filter((line) => line != null && String(line).trim() !== "")
+        : [];
+      const resolvedPrice =
+        data.price != null && data.price !== ""
+          ? data.price
+          : getProductPrice(data);
+
+      // Map fields explicitly so existing values are preserved for editing
+      setFormData({
+        name: data.name || "",
+        bannerImage: data.bannerImage || null,
+        productThumbnail: data.productThumbnail || null,
+        galleryImages: Array.isArray(data.galleryImages) ? [...data.galleryImages] : [],
+        category: data.category ? String(data.category) : "",
+        price: resolvedPrice !== 0 || data.price === 0 ? resolvedPrice : "",
+        specialLines: lines,
+        productCode: data.productCode || "",
+        youtubeURL: data.youtubeURL || "",
+        desc: data.desc || "",
+        stock: data.stock ?? 0,
+        panicStock: data.panicStock ?? 0,
+        hasOffer: Boolean(data.hasOffer),
+        offerTill: data.offerTill || "",
+        offerPanicStarts: data.offerPanicStarts || "",
       });
+      setPreview({
+        bannerImage: data.bannerImage || null,
+        productThumbnail: data.productThumbnail || null,
+        galleryImages: Array.isArray(data.galleryImages) ? [...data.galleryImages] : [],
+      });
+      setProductLoaded(true);
     } catch (error) {
       console.error("Error fetching product:", error);
+      toast.error("Failed to load product for editing.");
+      setProductLoaded(false);
     }
   };
 
@@ -111,17 +138,17 @@ const EditProduct = () => {
     const newGalleryImages = [...formData.galleryImages];
 
     if (files[0]) {
-      newGalleryImages[index] = files[0]; // Update with the new file
+      newGalleryImages[index] = files[0];
       setPreview({
         ...preview,
         galleryImages: [
           ...preview.galleryImages.slice(0, index),
-          URL.createObjectURL(files[0]), // Set the preview for the uploaded image
+          URL.createObjectURL(files[0]),
           ...preview.galleryImages.slice(index + 1),
         ],
       });
     } else if (!files[0] && newGalleryImages[index] === null) {
-      newGalleryImages[index] = null; // Keep it null if no file selected
+      newGalleryImages[index] = null;
     }
 
     setFormData({ ...formData, galleryImages: newGalleryImages });
@@ -130,17 +157,18 @@ const EditProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Prepare the data for submission
-    const bannerImagePath = formData.bannerImage
-      ? await uploadFile(formData.bannerImage)
-      : formData.bannerImage;
-    const productThumbnailPath = formData.productThumbnail
-      ? await uploadFile(formData.productThumbnail)
-      : formData.productThumbnail;
+    // Only upload newly selected File objects; keep existing URL strings as-is
+    const bannerImagePath =
+      formData.bannerImage instanceof File
+        ? await uploadFile(formData.bannerImage)
+        : formData.bannerImage;
+    const productThumbnailPath =
+      formData.productThumbnail instanceof File
+        ? await uploadFile(formData.productThumbnail)
+        : formData.productThumbnail;
 
     const galleryImagePaths = await Promise.all(
-      formData.galleryImages.map(async (file, index) => {
-        // If it's an existing image path, retain it, otherwise upload
+      formData.galleryImages.map(async (file) => {
         return file instanceof File ? await uploadFile(file) : file || null;
       })
     );
@@ -152,19 +180,15 @@ const EditProduct = () => {
       galleryImages: galleryImagePaths.filter((path) => path !== null),
       category: formData.category,
       price: formData.price,
-      priceBC: formData.priceBC,
-      priceMC: formData.priceMC,
-      priceSC: formData.priceSC,
-      priceFC: formData.priceFC,
-      specialLines: formData.specialLines,
+      specialLines: formData.specialLines.filter((line) => line.trim() !== ""),
       productCode: formData.productCode,
       youtubeURL: formData.youtubeURL,
       desc: formData.desc,
-      stock:formData.stock,
-      panicStock:formData.panicStock,
-      hasOffer:formData.hasOffer,
+      stock: formData.stock,
+      panicStock: formData.panicStock,
+      hasOffer: formData.hasOffer,
       offerTill: formData.offerTill,
-      offerPanicStarts: formData.offerPanicStarts
+      offerPanicStarts: formData.offerPanicStarts,
     };
 
     await updateProduct(productData);
@@ -182,7 +206,6 @@ const EditProduct = () => {
     const newGalleryImages = [...formData.galleryImages];
     const newPreview = [...preview.galleryImages];
 
-    // Remove the selected image from both arrays
     newGalleryImages.splice(index, 1);
     newPreview.splice(index, 1);
 
@@ -218,10 +241,10 @@ const EditProduct = () => {
         <div className="text-5xl text-center">You are Not Logged in.!.</div>
         <div className="text-3xl text-center">Please Sign Up</div>
         <div className="flex justify-center gap-3">
-          <Link to={'/login'} className="px-3 py-2 bg-emerald-700 rounded-md text-xl text-white">
+          <Link to={"/login"} className="px-3 py-2 bg-emerald-700 rounded-md text-xl text-white">
             <button>Login</button>
           </Link>
-          <Link to={'/signup'} className="px-3 py-2 bg-slate-700 rounded-md text-xl text-white">
+          <Link to={"/signup"} className="px-3 py-2 bg-slate-700 rounded-md text-xl text-white">
             <button>SignUp</button>
           </Link>
         </div>
@@ -232,12 +255,20 @@ const EditProduct = () => {
   if (user?.user?.role !== "admin") {
     return (
       <div className="h-[100vh] flex flex-col justify-center">
-        <div className="text-5xl text-center">
-          Access Denied.!.
-        </div>
+        <div className="text-5xl text-center">Access Denied.!.</div>
         <div className="text-2xl text-center pt-5">
           This page can only be accessed by the Admin
         </div>
+      </div>
+    );
+  }
+
+  if (!productLoaded) {
+    return (
+      <div className="p-4">
+        <ToastContainer />
+        <h2 className="text-2xl font-semibold mb-8 text-center">Edit Product</h2>
+        <p className="text-center">Loading product...</p>
       </div>
     );
   }
@@ -295,57 +326,20 @@ const EditProduct = () => {
 
         <div>
           <label className="label">
-            <span className="label-text">Price BC</span>
+            <span className="label-text">Price</span>
           </label>
           <input
             type="number"
-            name="priceBC"
-            value={formData.priceBC}
+            name="price"
+            value={formData.price}
             onChange={handleInputChange}
             className="input input-bordered w-full"
             required
+            min="0"
+            step="any"
           />
         </div>
-        <div>
-          <label className="label">
-            <span className="label-text">Price MC</span>
-          </label>
-          <input
-            type="number"
-            name="priceMC"
-            value={formData.priceMC}
-            onChange={handleInputChange}
-            className="input input-bordered w-full"
-            required
-          />
-        </div>
-        <div>
-          <label className="label">
-            <span className="label-text">Price SC</span>
-          </label>
-          <input
-            type="number"
-            name="priceSC"
-            value={formData.priceSC}
-            onChange={handleInputChange}
-            className="input input-bordered w-full"
-            required
-          />
-        </div>
-        <div>
-          <label className="label">
-            <span className="label-text">Price FC</span>
-          </label>
-          <input
-            type="number"
-            name="priceFC"
-            value={formData.priceFC}
-            onChange={handleInputChange}
-            className="input input-bordered w-full"
-            required
-          />
-        </div>
-        
+
         <div>
           <label className="label">
             <span className="label-text">Stock</span>
@@ -356,10 +350,9 @@ const EditProduct = () => {
             value={formData.stock}
             onChange={handleInputChange}
             className="input input-bordered w-full"
-            // required
           />
         </div>
-        
+
         <div>
           <label className="label">
             <span className="label-text">Panic Stock</span>
@@ -370,19 +363,22 @@ const EditProduct = () => {
             value={formData.panicStock}
             onChange={handleInputChange}
             className="input input-bordered w-full"
-            // required
           />
         </div>
-        
+
         <div>
           <label className="label">
             <span className="label-text">Available Offer</span>
           </label>
-          <Switch onChange={()=>setFormData({ ...formData, hasOffer: (formData.hasOffer)?false:true })} checked={formData.hasOffer} />
+          <Switch
+            onChange={() =>
+              setFormData({ ...formData, hasOffer: formData.hasOffer ? false : true })
+            }
+            checked={formData.hasOffer}
+          />
         </div>
 
-        {
-          formData.hasOffer &&
+        {formData.hasOffer && (
           <div>
             <label className="label">
               <span className="label-text">Offer Available untill</span>
@@ -395,11 +391,9 @@ const EditProduct = () => {
               className="input input-bordered w-full"
             />
           </div>
-          
-        }
+        )}
 
-        {
-          formData.hasOffer && 
+        {formData.hasOffer && (
           <div>
             <label className="label">
               <span className="label-text">Offer Panic Starts From</span>
@@ -412,7 +406,7 @@ const EditProduct = () => {
               className="input input-bordered w-full"
             />
           </div>
-        }
+        )}
 
         <div>
           <label className="label">
@@ -492,31 +486,42 @@ const EditProduct = () => {
           <label className="label">
             <span className="label-text">Special Lines</span>
           </label>
-          {formData.specialLines.map((line, index) => (
-            <div key={index} className="flex items-center mb-2">
-              <input
-                type="text"
-                value={line}
-                onChange={(e) => handleSpecialLineChange(index, e.target.value)}
-                className="input input-bordered w-full"
-                required
-              />
+          {formData.specialLines.length === 0 ? (
+            <button
+              type="button"
+              onClick={addSpecialLine}
+              className="btn bg-slate-700 text-white"
+            >
+              Add One
+            </button>
+          ) : (
+            <>
+              {formData.specialLines.map((line, index) => (
+                <div key={index} className="flex items-center mb-2">
+                  <input
+                    type="text"
+                    value={line}
+                    onChange={(e) => handleSpecialLineChange(index, e.target.value)}
+                    className="input input-bordered w-full"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => deleteSpecialLine(index)}
+                    className="btn btn-danger ml-2"
+                  >
+                    Delete
+                  </button>
+                </div>
+              ))}
               <button
                 type="button"
-                onClick={() => deleteSpecialLine(index)}
-                className="btn btn-danger ml-2"
+                onClick={addSpecialLine}
+                className="btn bg-slate-700 text-white"
               >
-                Delete
+                Add more
               </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={addSpecialLine}
-            className="btn bg-slate-700 text-white"
-          >
-            Add Special Line
-          </button>
+            </>
+          )}
         </div>
 
         <div>
@@ -531,17 +536,17 @@ const EditProduct = () => {
             className="input input-bordered w-full"
           />
         </div>
-        
+
         <div>
           <label className="label">
             <span className="label-text">Product Description</span>
           </label>
-          <input
-            type="text"
-            name="desc"
+          <RichTextEditor
             value={formData.desc}
-            onChange={handleInputChange}
-            className="input input-bordered w-full"
+            onChange={(value) =>
+              setFormData((prev) => ({ ...prev, desc: value }))
+            }
+            placeholder="Write a detailed product description..."
           />
         </div>
 

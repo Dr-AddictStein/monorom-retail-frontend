@@ -11,6 +11,7 @@ const AdminCategory = () => {
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
+    slug: "",
     slogan: "",
     bannerImage: null,
     categoryThumbnail: null,
@@ -39,12 +40,28 @@ const AdminCategory = () => {
   };
 
 
+  const toSlugPreview = (text) =>
+    String(text || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
     if (files) {
       const file = files[0];
       setFormData({ ...formData, [name]: file });
       setPreview({ ...preview, [name]: URL.createObjectURL(file) });
+    } else if (name === "name") {
+      // Auto-fill slug from name only while creating (not editing)
+      setFormData((prev) => ({
+        ...prev,
+        name: value,
+        slug: editCategoryId ? prev.slug : toSlugPreview(value),
+      }));
+    } else if (name === "slug") {
+      setFormData({ ...formData, slug: toSlugPreview(value) });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -76,6 +93,7 @@ const AdminCategory = () => {
 
     const categoryData = {
       name: formData.name,
+      slug: formData.slug || toSlugPreview(formData.name),
       slogan: formData.slogan,
       bannerImage: bannerImagePath,
       categoryThumbnail: thumbnailPath,
@@ -139,6 +157,7 @@ const AdminCategory = () => {
     setEditCategoryId(category._id);
     setFormData({
       name: category.name,
+      slug: category.slug || "",
       slogan: category?.slogan,
       bannerImage: null,
       categoryThumbnail: null,
@@ -170,6 +189,7 @@ const AdminCategory = () => {
   const resetForm = () => {
     setFormData({
       name: "",
+      slug: "",
       slogan: "",
       bannerImage: null,
       categoryThumbnail: null,
@@ -241,6 +261,25 @@ const AdminCategory = () => {
                   className="input input-bordered w-full"
                   required
                 />
+              </div>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">URL Slug</span>
+                </label>
+                <input
+                  type="text"
+                  name="slug"
+                  value={formData.slug}
+                  onChange={handleInputChange}
+                  className="input input-bordered w-full"
+                  placeholder="e.g. living-room"
+                  required
+                />
+                <label className="label">
+                  <span className="label-text-alt text-gray-500">
+                    Used in URL: /category/{formData.slug || "your-slug"}
+                  </span>
+                </label>
               </div>
               <div className="form-control">
                 <label className="label">
@@ -322,6 +361,7 @@ const AdminCategory = () => {
               <th className="border border-gray-600 text-center">
                 Category Name
               </th>
+              <th className="border border-gray-600 text-center">Slug</th>
               <th className="border border-gray-600 text-center">
                 Category Slogan
               </th>
@@ -339,6 +379,9 @@ const AdminCategory = () => {
                 </td>
                 <td className="border border-gray-600 text-center">
                   {category.name}
+                </td>
+                <td className="border border-gray-600 text-center">
+                  {category.slug || "—"}
                 </td>
                 <td className="border border-gray-600 text-center">
                   {category.slogan || "—"}

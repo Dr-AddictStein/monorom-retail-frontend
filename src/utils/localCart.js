@@ -23,7 +23,7 @@ export const clearLocalCart = () => {
 
 /**
  * Add or merge a product into the local cart.
- * item: { productId, name, image, category, price, qty }
+ * item: { productId, slug, name, image, category, price, qty }
  */
 export const addToLocalCart = (item) => {
   const cart = getLocalCart();
@@ -44,6 +44,7 @@ export const addToLocalCart = (item) => {
         name: item.name ?? c.name,
         image: item.image ?? c.image,
         category: item.category ?? c.category,
+        slug: item.slug ?? c.slug,
         totalPrice: (item.price ?? c.price) * newQty,
       };
     });
@@ -53,6 +54,7 @@ export const addToLocalCart = (item) => {
       {
         cartId: makeId(),
         productId: item.productId,
+        slug: item.slug,
         name: item.name,
         image: item.image,
         category: item.category || "",
@@ -74,6 +76,7 @@ export const buyNowLocalCart = (item) => {
     {
       cartId: makeId(),
       productId: item.productId,
+      slug: item.slug,
       name: item.name,
       image: item.image,
       category: item.category || "",

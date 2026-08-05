@@ -15,10 +15,7 @@ const AdminRestock = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(5);
 
-    const [newPriceBC, setNewPriceBC] = useState("");
-    const [newPriceMC, setNewPriceMC] = useState("");
-    const [newPriceSC, setNewPriceSC] = useState("");
-    const [newPriceFC, setNewPriceFC] = useState("");
+    const [newPrice, setNewPrice] = useState("");
     const [newStock, setNewStock] = useState("");
 
     const fetchCategory = async () => {
@@ -58,8 +55,8 @@ const AdminRestock = () => {
     };
 
     const handleBulkUpdate = async () => {
-        if (!newPriceBC || !newPriceMC || !newPriceSC || !newPriceFC || !newStock) {
-            toast.error("Please provide all price and stock values.");
+        if (!newPrice || !newStock) {
+            toast.error("Please provide price and stock values.");
             return;
         }
         setLoading(true);
@@ -72,10 +69,7 @@ const AdminRestock = () => {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         productIds: selectedProducts,
-                        priceBC: parseFloat(newPriceBC),
-                        priceMC: parseFloat(newPriceMC),
-                        priceSC: parseFloat(newPriceSC),
-                        priceFC: parseFloat(newPriceFC),
+                        price: parseFloat(newPrice),
                         stock: parseInt(newStock, 10),
                     }),
                 }
@@ -186,30 +180,9 @@ const AdminRestock = () => {
                     <div className="flex flex-wrap gap-4">
                         <input
                             type="number"
-                            placeholder="Price BC"
-                            value={newPriceBC}
-                            onChange={(e) => setNewPriceBC(e.target.value)}
-                            className="input input-bordered"
-                        />
-                        <input
-                            type="number"
-                            placeholder="Price MC"
-                            value={newPriceMC}
-                            onChange={(e) => setNewPriceMC(e.target.value)}
-                            className="input input-bordered"
-                        />
-                        <input
-                            type="number"
-                            placeholder="Price SC"
-                            value={newPriceSC}
-                            onChange={(e) => setNewPriceSC(e.target.value)}
-                            className="input input-bordered"
-                        />
-                        <input
-                            type="number"
-                            placeholder="Price FC"
-                            value={newPriceFC}
-                            onChange={(e) => setNewPriceFC(e.target.value)}
+                            placeholder="Price"
+                            value={newPrice}
+                            onChange={(e) => setNewPrice(e.target.value)}
                             className="input input-bordered"
                         />
                         <input
@@ -287,19 +260,8 @@ const AdminRestock = () => {
                                         "N/A"
                                     )}
                                 </td>
-                                <td className="border border-gray-700  text-center">
-                                    <div className="px-2 py-2 w-full border-b-2 border-b-black">
-                                        BC {product?.priceBC?.toFixed(2)}/-
-                                    </div>
-                                    <div className="px-2 py-2 w-full border-b-2 border-b-black">
-                                        MC: {product?.priceMC?.toFixed(2)}/-
-                                    </div>
-                                    <div className="px-2 py-2 w-full border-b-2 border-b-black">
-                                        SC: {product?.priceSC?.toFixed(2)}/-
-                                    </div>
-                                    <div className="px-2 py-2 w-full">
-                                        FC: {product?.priceFC?.toFixed(2)}/-
-                                    </div>
+                                <td className="border border-gray-700 px-4 py-2 text-center">
+                                    Tk. {Number(product?.price ?? product?.priceFC ?? 0).toFixed(2)}/-
                                 </td>
                                 <td className="border border-gray-700 px-4 py-2 text-center">
                                     {product.stock || 0}

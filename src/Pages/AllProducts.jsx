@@ -5,6 +5,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { useCart } from "../context/CartContext";
+import { getProductPrice } from "../utils/productPrice";
 import offerImg from "../../public/offer-removebg-preview.png";
 import outOfStockImg from "../../public/out of stock.png";
 
@@ -96,15 +97,8 @@ const AllProducts = () => {
        }
 
       // Sort by price - Default: High Price
-      const getPrice = (product) => {
-        if (user?.user?.userView === "BC") return product.priceBC;
-        if (user?.user?.userView === "MC") return product.priceMC;
-        if (user?.user?.userView === "SC") return product.priceSC;
-        return product.priceFC; // Default to FC
-      };
-
-      const priceA = getPrice(a);
-      const priceB = getPrice(b);
+      const priceA = getProductPrice(a);
+      const priceB = getProductPrice(b);
 
        if (sortByPrice === "high") {
          if (priceB !== priceA) {
@@ -317,12 +311,7 @@ const ProductCard = ({ product, user }) => {
   const [qty, setQty] = useState(1);
   const [qtyError, setQtyError] = useState("");
 
-  const getPrice = () => {
-    if (user?.user?.userView === "BC") return product?.priceBC;
-    if (user?.user?.userView === "MC") return product?.priceMC;
-    if (user?.user?.userView === "SC") return product?.priceSC;
-    return product?.priceFC;
-  };
+  const getPrice = () => getProductPrice(product);
 
   const handleAddToCartClick = (e) => {
     e.preventDefault();
@@ -378,6 +367,7 @@ const ProductCard = ({ product, user }) => {
     }
     addItem({
       productId: product._id,
+      slug: product.slug,
       name: product.name,
       image: product.productThumbnail,
       category: "",
@@ -419,7 +409,7 @@ const ProductCard = ({ product, user }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <Link to={`/productDetails/${product?._id}`}>
+      <Link to={`/productDetails/${product?.slug || product?._id}`}>
         <div className="relative min-w-full h-[140px] md:h-[200px]">
           <img
             className="w-full rounded-t-lg h-[140px] md:h-[200px] object-cover"
@@ -467,10 +457,7 @@ const ProductCard = ({ product, user }) => {
         </div>
         <div className="p-1 md:p-2 h-[100px] md:h-[150px] flex flex-col justify-between">
           <h3 className="text-sm md:text-2xl text-center">{product?.name}</h3>
-          {user?.user?.userView === "BC" && <h4 className="text-xs md:text-xl text-center">Price: Tk. {product?.priceBC}</h4>}
-          {user?.user?.userView === "MC" && <h4 className="text-xs md:text-xl text-center">Price: Tk. {product?.priceMC}</h4>}
-          {(!user || user?.user?.userView === "FC") && <h4 className="text-xs md:text-xl text-center">Price: Tk. {product?.priceFC}</h4>}
-          {user?.user?.userView === "SC" && <h4 className="text-xs md:text-xl text-center">Price: Tk. {product?.priceSC}</h4>}
+          <h4 className="text-xs md:text-xl text-center">Price: Tk. {getProductPrice(product)}</h4>
         </div>
       </Link>
       <>

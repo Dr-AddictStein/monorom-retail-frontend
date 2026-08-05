@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { RichTextContent } from "../../Components/RichTextEditor";
 import { useAuthContext } from "../../hooks/useAuthContext";
+import { getProductPrice } from "../../utils/productPrice";
 
 const ViewProduct = () => {
   const { id } = useParams();
@@ -94,7 +96,13 @@ const ViewProduct = () => {
         style={{ height: "400px", objectFit: "cover" }} // Adjust height as necessary
       />
       <h1 className="text-3xl font-bold my-8 text-center">{product.name}</h1>
-      <p className="text-xl my-4 text-center">Description: {product.desc}</p>
+      <div className="text-xl my-4 text-center max-w-3xl mx-auto">
+        <strong>Description:</strong>
+        <RichTextContent
+          html={product.desc}
+          className="mt-2 text-left"
+        />
+      </div>
       <div className="flex gap-12 mb-6">
         <div className="flex-1">
           <h2 className="text-xl font-semibold my-8">Product Thumbnail</h2>
@@ -113,16 +121,7 @@ const ViewProduct = () => {
               <strong>Category:</strong> {categoryName}
             </p>
             <p className="my-6">
-              <strong>Price BC:</strong> tk {product.priceBC.toFixed(2)}/-
-            </p>
-            <p className="my-6">
-              <strong>Price MC:</strong> tk {product.priceMC.toFixed(2)}/-
-            </p>
-            <p className="my-6">
-              <strong>Price SC:</strong> tk {product.priceSC.toFixed(2)}/-
-            </p>
-            <p className="my-6">
-              <strong>Price FC:</strong> tk {product.priceFC.toFixed(2)}/-
+              <strong>Price:</strong> tk {getProductPrice(product).toFixed(2)}/-
             </p>
             <p className="my-6">
               <strong>Stock:</strong> {(product.stock)||0}
@@ -138,7 +137,7 @@ const ViewProduct = () => {
             </p>
             <h3 className="text-lg font-semibold mt-4">Special Lines</h3>
             <ul className="list-disc list-inside">
-              {product.specialLines.length > 0 ? (
+              {product.specialLines?.length > 0 ? (
                 product.specialLines.map((line, index) => (
                   <li key={index}>{line}</li>
                 ))

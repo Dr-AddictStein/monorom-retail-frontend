@@ -7,20 +7,16 @@ import { useAuthContext } from "../hooks/useAuthContext";
 import { useCart } from "../context/CartContext";
 import LoginModal from "../Components/LoginModal";
 import SignupModal from "../Components/SignupModal";
-
-const getUnitPrice = (product, user) => {
-  if (user?.user?.userView === "BC") return product?.priceBC;
-  if (user?.user?.userView === "MC") return product?.priceMC;
-  if (user?.user?.userView === "SC") return product?.priceSC;
-  return product?.priceFC;
-};
+import { RichTextContent } from "../Components/RichTextEditor";
+import { getProductPrice } from "../utils/productPrice";
 
 const buildCartItem = (product, qty, user, categoryName = "") => ({
   productId: product._id,
+  slug: product.slug,
   name: product.name,
   image: product.productThumbnail,
   category: categoryName,
-  price: getUnitPrice(product, user),
+  price: getProductPrice(product),
   qty,
 });
 
@@ -28,7 +24,7 @@ const ProductDetails = () => {
   const { user } = useAuthContext();
   const { addItem, buyNow } = useCart();
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { slug } = useParams();
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [addedToCart, setAddedToCart] = useState(false);
@@ -90,7 +86,7 @@ const ProductDetails = () => {
   const fetchProduct = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/${id}`
+        `${import.meta.env.VITE_BACKEND_URL}/api/product/${slug}`
       );
       if (!response.ok) throw new Error("Failed to fetch product");
       const data = await response.json();
@@ -142,13 +138,13 @@ const ProductDetails = () => {
   };
 
   useEffect(() => {
-    if (id) {
+    if (slug) {
       setProducts(null);
       setCategory(null);
       fetchProduct();
       window.scrollTo({ top: 0, behavior: "auto" });
     }
-  }, [id]);
+  }, [slug]);
 
   useEffect(() => {
     if (product?._id) {
@@ -215,7 +211,7 @@ const ProductDetails = () => {
     navigate("/user/cart");
   };
 
-  const unitPrice = getUnitPrice(product, user);
+  const unitPrice = getProductPrice(product);
   const displayPrice =
     product?.stock <= 0 ? unitPrice : unitPrice * (Number(quantity) || 0);
   const outOfStock = product?.stock <= 0;
@@ -228,7 +224,7 @@ const ProductDetails = () => {
       : [];
 
   return (
-    <div key={id} className="max-w-7xl mx-auto px-4 md:px-6 pb-10 md:pb-14 pt-40 md:pt-48">
+    <div key={slug} className="max-w-7xl mx-auto px-4 md:px-6 pb-10 md:pb-14 pt-40 md:pt-48">
       <ToastContainer />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
@@ -312,7 +308,7 @@ const ProductDetails = () => {
         <div className="pd-info-enter flex flex-col min-h-0 lg:min-h-[520px]">
           <p className="text-sm tracking-wide text-gray-500 mb-3">
             <Link
-              to={`/category/${category?._id}`}
+              to={`/category/${category?.slug || category?._id}`}
               className="hover:text-gray-900 transition-colors"
             >
               {category?.name || "Category"}
@@ -444,9 +440,10 @@ const ProductDetails = () => {
 
         <div className="py-10 max-w-3xl mx-auto text-center">
           {activeTab === 1 && (
-            <p className="text-base md:text-lg text-gray-600 leading-relaxed whitespace-pre-line">
-              {product?.desc || "No description available."}
-            </p>
+            <RichTextContent
+              html={product?.desc}
+              className="text-base md:text-lg text-gray-600 leading-relaxed text-left"
+            />
           )}
           {activeTab === 2 && (
             <div>
@@ -514,7 +511,7 @@ const RelatedProductCard = ({ product, user, index = 0, categoryName = "" }) => 
   const [qty, setQty] = useState(1);
   const [qtyError, setQtyError] = useState("");
   const outOfStock = !product?.stock || product.stock < 1;
-  const price = getUnitPrice(product, user);
+  const price = getProductPrice(product);
 
   const handleAddToCartClick = (e) => {
     e.preventDefault();
@@ -575,7 +572,7 @@ const RelatedProductCard = ({ product, user, index = 0, categoryName = "" }) => 
       className="product-card-appear is-visible group/card"
       style={{ animationDelay: `${Math.min(index, 7) * 90}ms` }}
     >
-      <Link to={`/productDetails/${product._id}`} className="block">
+      <Link to={`/productDetails/${product.slug || product._id}`} className="block">
         <div className="relative w-full aspect-square overflow-hidden bg-gray-100">
           <img
             className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-105"

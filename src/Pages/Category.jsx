@@ -4,10 +4,11 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { useCart } from "../context/CartContext";
+import { getProductPrice } from "../utils/productPrice";
 
 const Category = () => {
   const { user } = useAuthContext();
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigationType = useNavigationType();
   const productsSectionRef = useRef(null);
   const hasHandledScroll = useRef(false);
@@ -16,25 +17,32 @@ const Category = () => {
   const [productsLoaded, setProductsLoaded] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const scrollKey = `category-scroll-${id}`;
+  const scrollKey = `category-scroll-${slug}`;
 
   const fetchCategory = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/category/${id}`
+        `${import.meta.env.VITE_BACKEND_URL}/api/category/${slug}`
       );
       if (!response.ok) throw new Error("Failed to fetch Category");
       const data = await response.json();
       setCategory(data);
+      return data;
     } catch (error) {
       console.error("Error fetching category:", error);
+      return null;
     }
   };
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (categoryId) => {
+    if (!categoryId) {
+      setProducts([]);
+      setProductsLoaded(true);
+      return;
+    }
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/getProductsByCategoryId/${id}`
+        `${import.meta.env.VITE_BACKEND_URL}/api/product/getProductsByCategoryId/${categoryId}`
       );
       if (!response.ok) throw new Error("Failed to fetch products");
       const data = await response.json();
@@ -47,15 +55,17 @@ const Category = () => {
   };
 
   useEffect(() => {
-    if (id) {
+    if (slug) {
       hasHandledScroll.current = false;
       setProducts([]);
       setProductsLoaded(false);
       setCategory(null);
-      fetchCategory();
-      fetchProducts();
+      (async () => {
+        const data = await fetchCategory();
+        await fetchProducts(data?._id);
+      })();
     }
-  }, [id]);
+  }, [slug]);
 
   // Remember scroll while browsing; save on leave
   useEffect(() => {
@@ -132,15 +142,8 @@ const Category = () => {
         }
       }
 
-      const getPrice = (product) => {
-        if (user?.user?.userView === "BC") return product.priceBC;
-        if (user?.user?.userView === "MC") return product.priceMC;
-        if (user?.user?.userView === "SC") return product.priceSC;
-        return product.priceFC;
-      };
-
-      const priceA = getPrice(a);
-      const priceB = getPrice(b);
+      const priceA = getProductPrice(a);
+      const priceB = getProductPrice(b);
 
       if (sortByPrice === "high") {
         if (priceB !== priceA) return priceB - priceA;
@@ -316,12 +319,7 @@ const Category = () => {
   );
 };
 
-const getDisplayPrice = (product, user) => {
-  if (user?.user?.userView === "BC") return product?.priceBC;
-  if (user?.user?.userView === "MC") return product?.priceMC;
-  if (user?.user?.userView === "SC") return product?.priceSC;
-  return product?.priceFC;
-};
+const getDisplayPrice = (product) => getProductPrice(product);
 
 const ProductCard = ({ product, user, index = 0, categoryName = "" }) => {
   const { addItem } = useCart();
@@ -335,7 +333,7 @@ const ProductCard = ({ product, user, index = 0, categoryName = "" }) => {
   const outOfStock = !product?.stock || product.stock < 1;
   const lowStock =
     product?.stock >= 1 && product?.stock <= product?.panicStock;
-  const price = getDisplayPrice(product, user);
+  const price = getDisplayPrice(product);
 
   useEffect(() => {
     const el = cardRef.current;
@@ -423,6 +421,7 @@ const ProductCard = ({ product, user, index = 0, categoryName = "" }) => {
     }
     addItem({
       productId: product._id,
+      slug: product.slug,
       name: product.name,
       image: product.productThumbnail,
       category: categoryName,
@@ -439,7 +438,7 @@ const ProductCard = ({ product, user, index = 0, categoryName = "" }) => {
       className={`product-card-appear group/card ${isVisible ? "is-visible" : ""}`}
       style={{ animationDelay: `${Math.min(index, 11) * 110}ms` }}
     >
-      <Link to={`/productDetails/${product?._id}`} className="block">
+      <Link to={`/productDetails/${product?.slug || product?._id}`} className="block">
         <div className="relative w-full aspect-square overflow-hidden bg-gray-100">
           <img
             className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-105"

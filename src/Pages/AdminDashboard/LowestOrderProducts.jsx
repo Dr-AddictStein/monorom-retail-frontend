@@ -15,10 +15,7 @@ const LowestOrderProducts = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
 
-  const [newPriceBC, setNewPriceBC] = useState("");
-  const [newPriceMC, setNewPriceMC] = useState("");
-  const [newPriceSC, setNewPriceSC] = useState("");
-  const [newPriceFC, setNewPriceFC] = useState("");
+  const [newPrice, setNewPrice] = useState("");
   const [newStock, setNewStock] = useState("");
 
   const { user } = useAuthContext();
@@ -69,8 +66,8 @@ const LowestOrderProducts = () => {
   };
 
   const handleBulkUpdate = async () => {
-    if (!newPriceBC || !newPriceMC || !newPriceSC || !newPriceFC || !newStock) {
-      toast.error("Please provide all price and stock values.");
+    if (!newPrice || !newStock) {
+      toast.error("Please provide price and stock values.");
       return;
     }
     setLoading(true);
@@ -83,10 +80,7 @@ const LowestOrderProducts = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             productIds: selectedProducts,
-            priceBC: parseFloat(newPriceBC),
-            priceMC: parseFloat(newPriceMC),
-            priceSC: parseFloat(newPriceSC),
-            priceFC: parseFloat(newPriceFC),
+            price: parseFloat(newPrice),
             stock: parseInt(newStock, 10),
           }),
         }
@@ -207,33 +201,12 @@ const LowestOrderProducts = () => {
 
         {isAdmin && bulkEditMode && (
           <div className="w-full">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-4">
               <input
                 type="number"
-                placeholder="Price BC"
-                value={newPriceBC}
-                onChange={(e) => setNewPriceBC(e.target.value)}
-                className="input input-bordered input-sm"
-              />
-              <input
-                type="number"
-                placeholder="Price MC"
-                value={newPriceMC}
-                onChange={(e) => setNewPriceMC(e.target.value)}
-                className="input input-bordered input-sm"
-              />
-              <input
-                type="number"
-                placeholder="Price SC"
-                value={newPriceSC}
-                onChange={(e) => setNewPriceSC(e.target.value)}
-                className="input input-bordered input-sm"
-              />
-              <input
-                type="number"
-                placeholder="Price FC"
-                value={newPriceFC}
-                onChange={(e) => setNewPriceFC(e.target.value)}
+                placeholder="Price"
+                value={newPrice}
+                onChange={(e) => setNewPrice(e.target.value)}
                 className="input input-bordered input-sm"
               />
               <input
@@ -328,19 +301,8 @@ const LowestOrderProducts = () => {
                       "N/A"
                     )}
                   </td>
-                  <td className="border border-gray-700 text-center">
-                    <div className="px-1 py-1 w-full border-b border-b-gray-300 text-xs">
-                      BC {product?.priceBC?.toFixed(2)}/-
-                    </div>
-                    <div className="px-1 py-1 w-full border-b border-b-gray-300 text-xs">
-                      MC: {product?.priceMC?.toFixed(2)}/-
-                    </div>
-                    <div className="px-1 py-1 w-full border-b border-b-gray-300 text-xs">
-                      SC: {product?.priceSC?.toFixed(2)}/-
-                    </div>
-                    <div className="px-1 py-1 w-full text-xs">
-                      FC: {product?.priceFC?.toFixed(2)}/-
-                    </div>
+                  <td className="border border-gray-700 px-2 py-2 text-center">
+                    Tk. {Number(product?.price ?? product?.priceFC ?? 0).toFixed(2)}/-
                   </td>
                   <td className="border border-gray-700 px-2 py-2 text-center">
                     {product.stock || 0}

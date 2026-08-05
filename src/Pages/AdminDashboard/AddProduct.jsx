@@ -3,32 +3,31 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Switch from "react-switch";
+import RichTextEditor from "../../Components/RichTextEditor";
 import { useAuthContext } from "../../hooks/useAuthContext";
 import { uploadFile } from "../../utils/uploadFile";
 
+const emptyForm = {
+  name: "",
+  bannerImage: null,
+  productThumbnail: null,
+  galleryImages: [],
+  category: "",
+  price: "",
+  specialLines: [],
+  productCode: "",
+  youtubeURL: "",
+  desc: "",
+  stock: 0,
+  panicStock: 0,
+  hasOffer: false,
+  offerTill: "",
+  offerPanicStarts: "",
+};
+
 const AddProduct = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: "",
-    bannerImage: null,
-    productThumbnail: null,
-    galleryImages: [],
-    category: "",
-    price: "",
-    priceBC: "",
-    priceMC: "",
-    priceFC: "",
-    priceSC: "",
-    specialLines: [""],
-    productCode: "",
-    youtubeURL: "",
-    desc: "",
-    stock: 0,
-    panicStock: 0,
-    hasOffer: false,
-    offerTill: "",
-    offerPanicStarts: ""
-  });
+  const [formData, setFormData] = useState(emptyForm);
   const [preview, setPreview] = useState({
     bannerImage: null,
     productThumbnail: null,
@@ -78,6 +77,12 @@ const AddProduct = () => {
     setFormData({ ...formData, specialLines: [...formData.specialLines, ""] });
   };
 
+  const deleteSpecialLine = (index) => {
+    const newSpecialLines = [...formData.specialLines];
+    newSpecialLines.splice(index, 1);
+    setFormData({ ...formData, specialLines: newSpecialLines });
+  };
+
   const handleGalleryImageChange = (index, e) => {
     const files = Array.from(e.target.files);
     const newGalleryImages = [...formData.galleryImages];
@@ -97,7 +102,6 @@ const AddProduct = () => {
     setPreview({ ...preview, galleryImages: [...preview.galleryImages, null] });
   };
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const bannerImagePath = await uploadFile(formData.bannerImage);
@@ -112,11 +116,8 @@ const AddProduct = () => {
       productThumbnail: productThumbnailPath,
       galleryImages: galleryImagePaths,
       category: formData.category,
-      priceBC: formData.priceBC,
-      priceMC: formData.priceMC,
-      priceSC: formData.priceSC,
-      priceFC: formData.priceFC,
-      specialLines: formData.specialLines,
+      price: formData.price,
+      specialLines: formData.specialLines.filter((line) => line.trim() !== ""),
       productCode: formData.productCode,
       youtubeURL: formData.youtubeURL,
       desc: formData.desc,
@@ -124,7 +125,7 @@ const AddProduct = () => {
       panicStock: formData.panicStock,
       hasOffer: formData.hasOffer,
       offerTill: formData.offerTill,
-      offerPanicStarts: formData.offerPanicStarts
+      offerPanicStarts: formData.offerPanicStarts,
     };
 
     await createProduct(productData);
@@ -144,27 +145,7 @@ const AddProduct = () => {
       );
       if (!response.ok) throw new Error("Failed to add product");
       toast.success("Product added successfully!");
-      setFormData({
-        name: "",
-        bannerImage: null,
-        productThumbnail: null,
-        galleryImages: [],
-        category: "",
-        price: "",
-        priceBC: "",
-        priceMC: "",
-        priceFC: "",
-        priceSC: "",
-        specialLines: [""],
-        productCode: "",
-        youtubeURL: "",
-        desc: "",
-        stock: 0,
-        panicStock: 0,
-        hasOffer: false,
-        offerTill: "",
-        offerPanicStarts: ""
-      });
+      setFormData(emptyForm);
       setPreview({
         bannerImage: null,
         productThumbnail: null,
@@ -185,10 +166,10 @@ const AddProduct = () => {
         <div className="text-5xl text-center">You are Not Logged in.!.</div>
         <div className="text-3xl text-center">Please Sign Up</div>
         <div className="flex justify-center gap-3">
-          <Link to={'/login'} className="px-3 py-2 bg-emerald-700 rounded-md text-xl text-white">
+          <Link to={"/login"} className="px-3 py-2 bg-emerald-700 rounded-md text-xl text-white">
             <button>Login</button>
           </Link>
-          <Link to={'/signup'} className="px-3 py-2 bg-slate-700 rounded-md text-xl text-white">
+          <Link to={"/signup"} className="px-3 py-2 bg-slate-700 rounded-md text-xl text-white">
             <button>SignUp</button>
           </Link>
         </div>
@@ -199,9 +180,7 @@ const AddProduct = () => {
   if (user?.user?.role !== "admin") {
     return (
       <div className="h-[100vh] flex flex-col justify-center">
-        <div className="text-5xl text-center">
-          Access Denied.!.
-        </div>
+        <div className="text-5xl text-center">Access Denied.!.</div>
         <div className="text-2xl text-center pt-5">
           This page can only be accessed by the Admin
         </div>
@@ -262,54 +241,17 @@ const AddProduct = () => {
 
         <div>
           <label className="label">
-            <span className="label-text">Price BC</span>
+            <span className="label-text">Price</span>
           </label>
           <input
             type="number"
-            name="priceBC"
-            value={formData.priceBC}
+            name="price"
+            value={formData.price}
             onChange={handleInputChange}
             className="input input-bordered w-full"
             required
-          />
-        </div>
-        <div>
-          <label className="label">
-            <span className="label-text">Price MC</span>
-          </label>
-          <input
-            type="number"
-            name="priceMC"
-            value={formData.priceMC}
-            onChange={handleInputChange}
-            className="input input-bordered w-full"
-            required
-          />
-        </div>
-        <div>
-          <label className="label">
-            <span className="label-text">Price SC</span>
-          </label>
-          <input
-            type="number"
-            name="priceSC"
-            value={formData.priceSC}
-            onChange={handleInputChange}
-            className="input input-bordered w-full"
-            required
-          />
-        </div>
-        <div>
-          <label className="label">
-            <span className="label-text">Price FC</span>
-          </label>
-          <input
-            type="number"
-            name="priceFC"
-            value={formData.priceFC}
-            onChange={handleInputChange}
-            className="input input-bordered w-full"
-            required
+            min="0"
+            step="any"
           />
         </div>
 
@@ -345,11 +287,15 @@ const AddProduct = () => {
           <label className="label">
             <span className="label-text">Available Offer</span>
           </label>
-          <Switch onChange={() => setFormData({ ...formData, hasOffer: (formData.hasOffer) ? false : true })} checked={formData.hasOffer} />
+          <Switch
+            onChange={() =>
+              setFormData({ ...formData, hasOffer: formData.hasOffer ? false : true })
+            }
+            checked={formData.hasOffer}
+          />
         </div>
 
-        {
-          formData.hasOffer &&
+        {formData.hasOffer && (
           <div>
             <label className="label">
               <span className="label-text">Offer Available untill</span>
@@ -362,11 +308,9 @@ const AddProduct = () => {
               className="input input-bordered w-full"
             />
           </div>
+        )}
 
-        }
-
-        {
-          formData.hasOffer &&
+        {formData.hasOffer && (
           <div>
             <label className="label">
               <span className="label-text">Offer Panic Starts From</span>
@@ -379,7 +323,7 @@ const AddProduct = () => {
               className="input input-bordered w-full"
             />
           </div>
-        }
+        )}
 
         <div>
           <label className="label">
@@ -425,20 +369,34 @@ const AddProduct = () => {
           <label className="label">
             <span className="label-text">Special Lines</span>
           </label>
-          {formData.specialLines.map((line, index) => (
-            <div key={index} className="flex items-center space-x-2">
-              <input
-                type="text"
-                value={line}
-                onChange={(e) => handleSpecialLineChange(index, e.target.value)}
-                className="input input-bordered w-full"
-                required
-              />
-            </div>
-          ))}
-          <button type="button" onClick={addSpecialLine} className="btn mt-2">
-            Add More
-          </button>
+          {formData.specialLines.length === 0 ? (
+            <button type="button" onClick={addSpecialLine} className="btn mt-2">
+              Add One
+            </button>
+          ) : (
+            <>
+              {formData.specialLines.map((line, index) => (
+                <div key={index} className="flex items-center space-x-2 mb-2">
+                  <input
+                    type="text"
+                    value={line}
+                    onChange={(e) => handleSpecialLineChange(index, e.target.value)}
+                    className="input input-bordered w-full"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => deleteSpecialLine(index)}
+                    className="btn btn-error btn-sm text-white"
+                  >
+                    Delete
+                  </button>
+                </div>
+              ))}
+              <button type="button" onClick={addSpecialLine} className="btn mt-2">
+                Add more
+              </button>
+            </>
+          )}
         </div>
 
         <div>
@@ -484,12 +442,12 @@ const AddProduct = () => {
           <label className="label">
             <span className="label-text">Product Description</span>
           </label>
-          <input
-            type="text"
-            name="desc"
+          <RichTextEditor
             value={formData.desc}
-            onChange={handleInputChange}
-            className="input input-bordered w-full"
+            onChange={(value) =>
+              setFormData((prev) => ({ ...prev, desc: value }))
+            }
+            placeholder="Write a detailed product description..."
           />
         </div>
 
