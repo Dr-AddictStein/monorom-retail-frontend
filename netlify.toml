@@ -1,0 +1,9 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# SPA fallback — required so React Router paths work on refresh / direct URL
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
