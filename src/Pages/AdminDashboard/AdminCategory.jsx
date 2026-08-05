@@ -3,9 +3,20 @@ import { FaRegEdit } from "react-icons/fa";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ProductSeoFields from "../../Components/ProductSeoFields";
 import { useAuthContext } from "../../hooks/useAuthContext";
 import { uploadFile } from "../../utils/uploadFile";
 import { Link } from "react-router-dom";
+
+const emptySeoForm = {
+  name: "",
+  slug: "",
+  slogan: "",
+  seoTitle: "",
+  seoDescription: "",
+  seoKeywords: "",
+  seoFocusKeyword: "",
+};
 
 const AdminCategory = () => {
   const [categories, setCategories] = useState([]);
@@ -21,6 +32,9 @@ const AdminCategory = () => {
     categoryThumbnail: null,
   });
   const [editCategoryId, setEditCategoryId] = useState(null);
+  const [seoCategoryId, setSeoCategoryId] = useState(null);
+  const [seoForm, setSeoForm] = useState(emptySeoForm);
+  const [seoSaving, setSeoSaving] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -167,6 +181,57 @@ const AdminCategory = () => {
       categoryThumbnail: category.categoryThumbnail,
     });
     document.getElementById("category_modal").showModal();
+  };
+
+  const handleOpenSeo = (category) => {
+    setSeoCategoryId(category._id);
+    setSeoForm({
+      name: category.name || "",
+      slug: category.slug || "",
+      slogan: category.slogan || "",
+      seoTitle: category.seoTitle || "",
+      seoDescription: category.seoDescription || "",
+      seoKeywords: category.seoKeywords || "",
+      seoFocusKeyword: category.seoFocusKeyword || "",
+    });
+    document.getElementById("category_seo_modal").showModal();
+  };
+
+  const handleSeoInputChange = (e) => {
+    const { name, value } = e.target;
+    setSeoForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveSeo = async (e) => {
+    e.preventDefault();
+    if (!seoCategoryId) return;
+    setSeoSaving(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/category/${seoCategoryId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            seoTitle: seoForm.seoTitle,
+            seoDescription: seoForm.seoDescription,
+            seoKeywords: seoForm.seoKeywords,
+            seoFocusKeyword: seoForm.seoFocusKeyword,
+          }),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to save category SEO");
+      toast.success("Category SEO saved!");
+      fetchCategories();
+      document.getElementById("category_seo_modal").close();
+      setSeoCategoryId(null);
+      setSeoForm(emptySeoForm);
+    } catch (error) {
+      console.error("Error saving category SEO:", error);
+      toast.error("Error saving category SEO. Please try again.");
+    } finally {
+      setSeoSaving(false);
+    }
   };
 
   const handleDelete = async (categoryId) => {
@@ -351,6 +416,66 @@ const AdminCategory = () => {
             </form>
           </div>
         </dialog>
+
+        <dialog id="category_seo_modal" className="modal">
+          <div className="modal-box max-w-3xl">
+            <form onSubmit={handleSaveSeo} className="text-black space-y-4">
+              <div>
+                <h3 className="text-xl font-semibold">
+                  Category SEO — {seoForm.name || "Category"}
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Optimizes the public page{" "}
+                  <span className="font-mono">
+                    /category/{seoForm.slug || "slug"}
+                  </span>
+                </p>
+              </div>
+
+              <ProductSeoFields
+                formData={seoForm}
+                onChange={handleSeoInputChange}
+                onFieldUpdate={(name, value) =>
+                  setSeoForm((prev) => ({ ...prev, [name]: value }))
+                }
+                generateEndpoint="/api/ai/category/generateSeo"
+                nameMissingMessage="Category name is missing."
+                buildPayload={(field) => ({
+                  field,
+                  categoryId: seoCategoryId,
+                  name: seoForm.name,
+                  slug: seoForm.slug,
+                  slogan: seoForm.slogan,
+                  seoFocusKeyword: seoForm.seoFocusKeyword,
+                  seoTitle: seoForm.seoTitle,
+                  seoDescription: seoForm.seoDescription,
+                  seoKeywords: seoForm.seoKeywords,
+                })}
+              />
+
+              <div className="flex gap-4 mt-2">
+                <button
+                  className="btn px-4 btn-primary"
+                  type="submit"
+                  disabled={seoSaving}
+                >
+                  {seoSaving ? "Saving..." : "Save SEO"}
+                </button>
+                <button
+                  className="btn bg-red-600 text-white"
+                  type="button"
+                  onClick={() => {
+                    document.getElementById("category_seo_modal").close();
+                    setSeoCategoryId(null);
+                    setSeoForm(emptySeoForm);
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </form>
+          </div>
+        </dialog>
       </div>
 
       <div className="overflow-x-auto mt-2">
@@ -387,13 +512,22 @@ const AdminCategory = () => {
                   {category.slogan || "—"}
                 </td>
                 <td className="border-gray-600 border-b flex-col justify-center h-full">
-                  <div className="flex justify-center gap-2">
+                  <div className="flex justify-center items-center gap-2 flex-wrap py-2">
                     <FaRegEdit
                       className="cursor-pointer p-1 text-2xl rounded-md"
+                      title="Edit"
                       onClick={() => handleEdit(category)}
                     />
+                    <button
+                      type="button"
+                      className="btn btn-xs btn-outline"
+                      onClick={() => handleOpenSeo(category)}
+                    >
+                      SEO
+                    </button>
                     <RiDeleteBin6Line
                       className="cursor-pointer p-1 text-2xl rounded-md"
+                      title="Delete"
                       onClick={() => handleDelete(category._id)}
                     />
                   </div>

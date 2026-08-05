@@ -3,9 +3,11 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Switch from "react-switch";
+import ProductSeoFields from "../../Components/ProductSeoFields";
 import RichTextEditor from "../../Components/RichTextEditor";
 import { useAuthContext } from "../../hooks/useAuthContext";
 import { getProductPrice } from "../../utils/productPrice";
+import { toSlug } from "../../utils/slugify";
 import { uploadFile } from "../../utils/uploadFile";
 
 const EditProduct = () => {
@@ -14,6 +16,7 @@ const EditProduct = () => {
 
   const [formData, setFormData] = useState({
     name: "",
+    slug: "",
     bannerImage: null,
     productThumbnail: null,
     galleryImages: [],
@@ -23,6 +26,10 @@ const EditProduct = () => {
     productCode: "",
     youtubeURL: "",
     desc: "",
+    seoTitle: "",
+    seoDescription: "",
+    seoKeywords: "",
+    seoFocusKeyword: "",
     stock: 0,
     panicStock: 0,
     hasOffer: false,
@@ -74,6 +81,7 @@ const EditProduct = () => {
       // Map fields explicitly so existing values are preserved for editing
       setFormData({
         name: data.name || "",
+        slug: data.slug || toSlug(data.name || ""),
         bannerImage: data.bannerImage || null,
         productThumbnail: data.productThumbnail || null,
         galleryImages: Array.isArray(data.galleryImages) ? [...data.galleryImages] : [],
@@ -83,6 +91,10 @@ const EditProduct = () => {
         productCode: data.productCode || "",
         youtubeURL: data.youtubeURL || "",
         desc: data.desc || "",
+        seoTitle: data.seoTitle || "",
+        seoDescription: data.seoDescription || "",
+        seoKeywords: data.seoKeywords || "",
+        seoFocusKeyword: data.seoFocusKeyword || "",
         stock: data.stock ?? 0,
         panicStock: data.panicStock ?? 0,
         hasOffer: Boolean(data.hasOffer),
@@ -112,6 +124,14 @@ const EditProduct = () => {
       } else if (name === "productThumbnail") {
         setPreview({ ...preview, productThumbnail: URL.createObjectURL(file) });
       }
+    } else if (name === "name") {
+      setFormData((prev) => ({
+        ...prev,
+        name: value,
+        slug: toSlug(value),
+      }));
+    } else if (name === "slug") {
+      setFormData((prev) => ({ ...prev, slug: toSlug(value) }));
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -175,6 +195,7 @@ const EditProduct = () => {
 
     const productData = {
       name: formData.name,
+      slug: formData.slug || toSlug(formData.name),
       bannerImage: bannerImagePath,
       productThumbnail: productThumbnailPath,
       galleryImages: galleryImagePaths.filter((path) => path !== null),
@@ -184,6 +205,10 @@ const EditProduct = () => {
       productCode: formData.productCode,
       youtubeURL: formData.youtubeURL,
       desc: formData.desc,
+      seoTitle: formData.seoTitle,
+      seoDescription: formData.seoDescription,
+      seoKeywords: formData.seoKeywords,
+      seoFocusKeyword: formData.seoFocusKeyword,
       stock: formData.stock,
       panicStock: formData.panicStock,
       hasOffer: formData.hasOffer,
@@ -290,6 +315,22 @@ const EditProduct = () => {
             className="input input-bordered w-full"
             required
           />
+        </div>
+        <div>
+          <label className="label">
+            <span className="label-text">URL Slug</span>
+          </label>
+          <input
+            type="text"
+            name="slug"
+            value={formData.slug}
+            onChange={handleInputChange}
+            className="input input-bordered w-full"
+            placeholder="auto-generated-from-product-name"
+          />
+          <p className="text-xs text-base-content/50 mt-1">
+            Used in URL: /productDetails/{formData.slug || "your-slug"}
+          </p>
         </div>
         <div>
           <label className="label">
@@ -549,6 +590,31 @@ const EditProduct = () => {
             placeholder="Write a detailed product description..."
           />
         </div>
+
+        <ProductSeoFields
+          formData={formData}
+          onChange={handleInputChange}
+          onFieldUpdate={(name, value) =>
+            setFormData((prev) => ({ ...prev, [name]: value }))
+          }
+          generateEndpoint="/api/ai/product/generateSeo"
+          nameMissingMessage="Enter the product name first, then generate SEO."
+          buildPayload={(field) => ({
+            field,
+            name: formData.name,
+            productCode: formData.productCode,
+            categoryName:
+              categories.find((c) => String(c._id) === String(formData.category))
+                ?.name || "",
+            desc: formData.desc,
+            specialLines: formData.specialLines,
+            price: formData.price,
+            seoFocusKeyword: formData.seoFocusKeyword,
+            seoTitle: formData.seoTitle,
+            seoDescription: formData.seoDescription,
+            seoKeywords: formData.seoKeywords,
+          })}
+        />
 
         <button type="submit" className="btn btn-success w-full text-white">
           Update Product

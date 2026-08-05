@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { FaRegStar, FaStar, FaYoutube } from "react-icons/fa";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
@@ -9,6 +10,7 @@ import LoginModal from "../Components/LoginModal";
 import SignupModal from "../Components/SignupModal";
 import { RichTextContent } from "../Components/RichTextEditor";
 import { getProductPrice } from "../utils/productPrice";
+import { stripHtml } from "../utils/slugify";
 
 const buildCartItem = (product, qty, user, categoryName = "") => ({
   productId: product._id,
@@ -223,8 +225,66 @@ const ProductDetails = () => {
       ? [product.productThumbnail]
       : [];
 
+  const pageTitle =
+    product?.seoTitle ||
+    (product?.name ? `${product.name} | Monorom` : "Monorom");
+  const plainDesc = stripHtml(product?.desc);
+  const pageDescription =
+    product?.seoDescription ||
+    (plainDesc ? plainDesc.slice(0, 160) : "") ||
+    (product?.name
+      ? `Buy ${product.name} from Monorom. Quality ceramics and dinnerware.`
+      : "Shop quality ceramics at Monorom.");
+  const pageUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/productDetails/${product?.slug || slug}`
+      : `/productDetails/${product?.slug || slug}`;
+  const ogImage = product?.productThumbnail || product?.bannerImage || "";
+  const productJsonLd = product
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: product.name,
+        description: pageDescription,
+        image: [ogImage, ...(product.galleryImages || [])].filter(Boolean),
+        sku: product.productCode || undefined,
+        brand: { "@type": "Brand", name: "Monorom" },
+        offers: {
+          "@type": "Offer",
+          url: pageUrl,
+          priceCurrency: "BDT",
+          price: unitPrice,
+          availability: outOfStock
+            ? "https://schema.org/OutOfStock"
+            : "https://schema.org/InStock",
+        },
+      }
+    : null;
+
   return (
     <div key={slug} className="max-w-7xl mx-auto px-4 md:px-6 pb-10 md:pb-14 pt-40 md:pt-48">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        {product?.seoKeywords ? (
+          <meta name="keywords" content={product.seoKeywords} />
+        ) : null}
+        <link rel="canonical" href={pageUrl} />
+        <meta property="og:type" content="product" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:url" content={pageUrl} />
+        {ogImage ? <meta property="og:image" content={ogImage} /> : null}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        {ogImage ? <meta name="twitter:image" content={ogImage} /> : null}
+        {productJsonLd ? (
+          <script type="application/ld+json">
+            {JSON.stringify(productJsonLd)}
+          </script>
+        ) : null}
+      </Helmet>
       <ToastContainer />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">

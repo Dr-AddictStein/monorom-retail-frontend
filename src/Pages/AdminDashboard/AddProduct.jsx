@@ -3,12 +3,15 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Switch from "react-switch";
+import ProductSeoFields from "../../Components/ProductSeoFields";
 import RichTextEditor from "../../Components/RichTextEditor";
 import { useAuthContext } from "../../hooks/useAuthContext";
+import { toSlug } from "../../utils/slugify";
 import { uploadFile } from "../../utils/uploadFile";
 
 const emptyForm = {
   name: "",
+  slug: "",
   bannerImage: null,
   productThumbnail: null,
   galleryImages: [],
@@ -18,6 +21,10 @@ const emptyForm = {
   productCode: "",
   youtubeURL: "",
   desc: "",
+  seoTitle: "",
+  seoDescription: "",
+  seoKeywords: "",
+  seoFocusKeyword: "",
   stock: 0,
   panicStock: 0,
   hasOffer: false,
@@ -62,6 +69,14 @@ const AddProduct = () => {
       } else if (name === "productThumbnail") {
         setPreview({ ...preview, productThumbnail: URL.createObjectURL(file) });
       }
+    } else if (name === "name") {
+      setFormData((prev) => ({
+        ...prev,
+        name: value,
+        slug: toSlug(value),
+      }));
+    } else if (name === "slug") {
+      setFormData((prev) => ({ ...prev, slug: toSlug(value) }));
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -112,6 +127,7 @@ const AddProduct = () => {
 
     const productData = {
       name: formData.name,
+      slug: formData.slug || toSlug(formData.name),
       bannerImage: bannerImagePath,
       productThumbnail: productThumbnailPath,
       galleryImages: galleryImagePaths,
@@ -121,6 +137,10 @@ const AddProduct = () => {
       productCode: formData.productCode,
       youtubeURL: formData.youtubeURL,
       desc: formData.desc,
+      seoTitle: formData.seoTitle,
+      seoDescription: formData.seoDescription,
+      seoKeywords: formData.seoKeywords,
+      seoFocusKeyword: formData.seoFocusKeyword,
       stock: formData.stock,
       panicStock: formData.panicStock,
       hasOffer: formData.hasOffer,
@@ -205,6 +225,22 @@ const AddProduct = () => {
             className="input input-bordered w-full"
             required
           />
+        </div>
+        <div>
+          <label className="label">
+            <span className="label-text">URL Slug</span>
+          </label>
+          <input
+            type="text"
+            name="slug"
+            value={formData.slug}
+            onChange={handleInputChange}
+            className="input input-bordered w-full"
+            placeholder="auto-generated-from-product-name"
+          />
+          <p className="text-xs text-base-content/50 mt-1">
+            Used in URL: /productDetails/{formData.slug || "your-slug"}
+          </p>
         </div>
         <div>
           <label className="label">
@@ -450,6 +486,30 @@ const AddProduct = () => {
             placeholder="Write a detailed product description..."
           />
         </div>
+
+        <ProductSeoFields
+          formData={formData}
+          onChange={handleInputChange}
+          onFieldUpdate={(name, value) =>
+            setFormData((prev) => ({ ...prev, [name]: value }))
+          }
+          generateEndpoint="/api/ai/product/generateSeo"
+          nameMissingMessage="Enter the product name first, then generate SEO."
+          buildPayload={(field) => ({
+            field,
+            name: formData.name,
+            productCode: formData.productCode,
+            categoryName:
+              categories.find((c) => c._id === formData.category)?.name || "",
+            desc: formData.desc,
+            specialLines: formData.specialLines,
+            price: formData.price,
+            seoFocusKeyword: formData.seoFocusKeyword,
+            seoTitle: formData.seoTitle,
+            seoDescription: formData.seoDescription,
+            seoKeywords: formData.seoKeywords,
+          })}
+        />
 
         <button type="submit" className="btn btn-primary mt-4">
           Add Product

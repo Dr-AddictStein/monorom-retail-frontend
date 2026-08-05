@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link, useNavigationType, useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -162,6 +163,88 @@ const Category = () => {
 
   return (
     <div>
+      <Helmet>
+        <title>
+          {category?.seoTitle ||
+            (category?.name ? `${category.name} | Monorom` : "Monorom")}
+        </title>
+        <meta
+          name="description"
+          content={
+            category?.seoDescription ||
+            category?.slogan ||
+            (category?.name
+              ? `Shop ${category.name} from Monorom — quality ceramics and homeware in Bangladesh.`
+              : "Shop quality ceramics at Monorom.")
+          }
+        />
+        {category?.seoKeywords ? (
+          <meta name="keywords" content={category.seoKeywords} />
+        ) : null}
+        <link
+          rel="canonical"
+          href={
+            typeof window !== "undefined"
+              ? `${window.location.origin}/category/${category?.slug || slug}`
+              : `/category/${category?.slug || slug}`
+          }
+        />
+        <meta property="og:type" content="website" />
+        <meta
+          property="og:title"
+          content={
+            category?.seoTitle ||
+            (category?.name ? `${category.name} | Monorom` : "Monorom")
+          }
+        />
+        <meta
+          property="og:description"
+          content={
+            category?.seoDescription ||
+            category?.slogan ||
+            (category?.name
+              ? `Shop ${category.name} from Monorom.`
+              : "Shop quality ceramics at Monorom.")
+          }
+        />
+        <meta
+          property="og:url"
+          content={
+            typeof window !== "undefined"
+              ? `${window.location.origin}/category/${category?.slug || slug}`
+              : `/category/${category?.slug || slug}`
+          }
+        />
+        {category?.bannerImage || category?.categoryThumbnail ? (
+          <meta
+            property="og:image"
+            content={category.bannerImage || category.categoryThumbnail}
+          />
+        ) : null}
+        {category
+          ? (
+            <script type="application/ld+json">
+              {JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "CollectionPage",
+                name: category.seoTitle || category.name,
+                description:
+                  category.seoDescription ||
+                  category.slogan ||
+                  `Shop ${category.name} at Monorom`,
+                url:
+                  typeof window !== "undefined"
+                    ? `${window.location.origin}/category/${category.slug || slug}`
+                    : `/category/${category.slug || slug}`,
+                isPartOf: {
+                  "@type": "WebSite",
+                  name: "Monorom",
+                },
+              })}
+            </script>
+            )
+          : null}
+      </Helmet>
       <ToastContainer />
       <div
         className="bg-fixed bg-cover bg-center w-full relative mb-10"
