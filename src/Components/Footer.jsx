@@ -34,16 +34,14 @@ const Footer = () => {
                     <Link to="/privacy-policy" className="link link-hover">Privacy policy</Link>
                     <Link to="/cookie-policy" className="link link-hover">Cookie policy</Link>
                 </div>
-                <div className="flex flex-col items-center justify-center text-center w-[140px]">
+                <div className="flex flex-col items-center justify-center text-center">
                     <Link to="/" className="inline-flex justify-center">
                         {logo ? (
                             <img src={logo} alt="Monorom" className="w-[110px] mx-auto" />
                         ) : null}
                     </Link>
-                    <p className="mt-3 text-sm text-gray-300 text-center leading-snug">
-                        © {new Date().getFullYear()} Monorom.
-                        <br />
-                        All rights reserved.
+                    <p className="mt-3 text-sm text-gray-300 text-center whitespace-nowrap">
+                        © {new Date().getFullYear()} Monorom. All rights reserved
                     </p>
                 </div>
             </div>
