@@ -21,7 +21,7 @@ const Footer = () => {
 
     return (
         <div className="bg-[#212121] text-white mt-20">
-            <div className="flex justify-between items-start py-10 w-3/4 gap-2 mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 items-center py-10 w-3/4 gap-8 mx-auto">
                 <div className="flex flex-col">
                     <h6 className="footer-title md:font-bold md:text-[16px] text-[14px]">Company</h6>
                     <Link to="/about-us" className="link link-hover">About us</Link>
@@ -35,13 +35,15 @@ const Footer = () => {
                     <Link to="/cookie-policy" className="link link-hover">Cookie policy</Link>
                 </div>
                 <div className="flex flex-col items-center justify-center text-center">
-                    <Link to="/" className="inline-flex justify-center">
+                    <Link to="/" className="flex justify-center w-full">
                         {logo ? (
-                            <img src={logo} alt="Monorom" className="w-[110px] mx-auto" />
+                            <img src={logo} alt="Monorom" className="w-[110px] h-auto object-contain" />
                         ) : null}
                     </Link>
-                    <p className="mt-3 text-sm text-gray-300 text-center whitespace-nowrap">
-                        © {new Date().getFullYear()} Monorom. All rights reserved
+                    <p className="mt-3 text-sm text-gray-300 text-center leading-snug">
+                        © {new Date().getFullYear()} Monorom.
+                        <br />
+                        All rights reserved
                     </p>
                 </div>
             </div>
