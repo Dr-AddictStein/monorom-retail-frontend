@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuthContext } from "../../hooks/useAuthContext";
 import { FaSearch } from "react-icons/fa";
+import OrderAddress from "../../Components/OrderAddress";
 
 const CompletedOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -99,7 +100,7 @@ const CompletedOrders = () => {
               <th className="p-4 text-center">Company Name</th>
               <th className="p-4 text-center">Phone</th>
               <th className="p-4 text-center">Total Cost</th>
-              <th className="p-4 text-center">Shipping Address</th>
+              <th className="p-4 text-center">Delivery Address</th>
               <th className="p-4 text-center">Date</th>
               <th className="p-4 text-center">Actions</th>
             </tr>
@@ -119,7 +120,9 @@ const CompletedOrders = () => {
                   <td className="p-4 text-center">
                     {parseFloat(order.totalCost).toFixed(2)}/-
                   </td>
-                  <td className="p-4 text-center">{order.address}</td>
+                  <td className="p-4 text-center">
+                    <OrderAddress order={order} />
+                  </td>
                   <td className="p-4 text-center">{new Date(order.createdAt).toLocaleString()}</td>
                   <td className="p-4 text-center">
                     <Link
@@ -176,12 +179,12 @@ const CompletedOrders = () => {
                 </span>
               </div>
 
-              {/* Shipping Address */}
+              {/* Delivery Address */}
               <div className="flex justify-between items-start">
                 <span className="text-sm font-medium text-gray-500">Address</span>
-                <span className="text-sm text-gray-900 text-right max-w-[60%]">
-                  {order.address}
-                </span>
+                  <span className="text-sm text-gray-900 text-right max-w-[60%]">
+                    <OrderAddress order={order} />
+                  </span>
               </div>
 
               {/* Date */}

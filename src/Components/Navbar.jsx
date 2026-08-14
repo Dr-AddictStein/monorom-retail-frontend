@@ -148,9 +148,16 @@ const Navbar = () => {
     </ul>
   );
 
+  const solidNav =
+    isScrolled ||
+    location.pathname.startsWith("/productDetails") ||
+    ["/about-us", "/terms-of-use", "/privacy-policy", "/cookie-policy", "/blogs"].some(
+      (path) => location.pathname.startsWith(path)
+    );
+
   return (
     <div
-      className={`fixed w-full md: py-5 z-50 transition-all duration-300 ${isScrolled || location.pathname.startsWith("/productDetails") ? "bg-[#212121]" : "bg-transparent"
+      className={`fixed w-full md: py-5 z-50 transition-all duration-300 ${solidNav ? "bg-[#212121]" : "bg-transparent"
         }`}
     >
 

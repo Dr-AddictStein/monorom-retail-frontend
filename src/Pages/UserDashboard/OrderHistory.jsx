@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
 import { getLocalOrders, saveLocalOrders } from "../../utils/localOrders";
+import OrderAddress from "../../Components/OrderAddress";
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState(() => getLocalOrders());
@@ -81,7 +82,7 @@ const OrderHistory = () => {
             <tr className="bg-gray-200 text-gray-600 uppercase text-sm">
               <th className="p-4 text-center">Created</th>
               <th className="p-4 text-center">Company Name</th>
-              <th className="p-4 text-center">Shipping Address</th>
+              <th className="p-4 text-center">Delivery Address</th>
               <th className="p-4 text-center">Total Cost</th>
               <th className="p-4 text-center">Status</th>
               <th className="p-4 text-center">Actions</th>
@@ -103,7 +104,9 @@ const OrderHistory = () => {
                     {new Date(order.createdAt).toLocaleString()}
                   </td>
                   <td className="p-4 text-center">{order.companyName}</td>
-                  <td className="p-4 text-center">{order.address}</td>
+                  <td className="p-4 text-center">
+                    <OrderAddress order={order} />
+                  </td>
                   <td className="p-4 text-center">
                     Tk. {parseFloat(order.totalCost).toFixed(2)}
                   </td>
@@ -180,7 +183,7 @@ const OrderHistory = () => {
                     Address
                   </span>
                   <span className="text-sm text-gray-900 text-right max-w-[60%]">
-                    {order.address}
+                    <OrderAddress order={order} />
                   </span>
                 </div>
 

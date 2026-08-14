@@ -11,7 +11,9 @@ const SignupModal = ({ isOpen, onClose, onOpenLogin }) => {
     const [lastName, setLastName] = useState('');
     const [phone, setPhone] = useState('');
     const [city, setCity] = useState('');
-    const [shippingAddress, setShippingAddress] = useState('');
+    const [homeAddress, setHomeAddress] = useState('');
+    const [thana, setThana] = useState('');
+    const [district, setDistrict] = useState('');
     const [companyName, setCompanyName] = useState('');
     const [dob, setDateOfBirth] = useState('');
     const [pin, setPin] = useState('');
@@ -43,7 +45,9 @@ const SignupModal = ({ isOpen, onClose, onOpenLogin }) => {
         }
         if (!phone?.trim()) return 'Phone number is required.';
         if (!city.trim()) return 'City is required.';
-        if (!shippingAddress.trim()) return 'Shipping address is required.';
+        if (!homeAddress.trim()) return 'Home address is required.';
+        if (!thana.trim()) return 'Thana is required.';
+        if (!district.trim()) return 'District is required.';
         if (!companyName.trim()) return 'Company name is required.';
         if (!dob.trim()) return 'Date of birth is required.';
         if (!/^\d{4}$/.test(pin)) return 'PIN must be exactly 4 digits.';
@@ -89,7 +93,10 @@ const SignupModal = ({ isOpen, onClose, onOpenLogin }) => {
             lastName.trim(),
             phone.trim(),
             city.trim(),
-            shippingAddress.trim(),
+            "",
+            homeAddress.trim(),
+            thana.trim(),
+            district.trim(),
             companyName.trim(),
             dob,
             pin,
@@ -138,7 +145,9 @@ const SignupModal = ({ isOpen, onClose, onOpenLogin }) => {
                     <input type="text" placeholder="Last Name" className="w-full p-2 border border-gray-300 rounded mb-3" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                     <input type="tel" placeholder="Phone (required)" className="w-full p-2 border border-gray-300 rounded mb-3" value={phone} onChange={(e) => setPhone(e.target.value)} />
                     <input type="text" placeholder="City" className="w-full p-2 border border-gray-300 rounded mb-3" value={city} onChange={(e) => setCity(e.target.value)} />
-                    <input type="text" placeholder="Shipping Address" className="w-full p-2 border border-gray-300 rounded mb-3" value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} />
+                    <input type="text" placeholder="Home Address" className="w-full p-2 border border-gray-300 rounded mb-3" value={homeAddress} onChange={(e) => setHomeAddress(e.target.value)} />
+                    <input type="text" placeholder="Thana" className="w-full p-2 border border-gray-300 rounded mb-3" value={thana} onChange={(e) => setThana(e.target.value)} />
+                    <input type="text" placeholder="District" className="w-full p-2 border border-gray-300 rounded mb-3" value={district} onChange={(e) => setDistrict(e.target.value)} />
                     <input type="text" placeholder="Company Name" className="w-full p-2 border border-gray-300 rounded mb-3" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
                     <input type="date" className="w-full p-2 border border-gray-300 rounded mb-3" onChange={handleDateChange} />
                     <input type="password" inputMode="numeric" maxLength={4} placeholder="PIN (4 digits)" className="w-full p-2 border border-gray-300 rounded mb-3" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))} />

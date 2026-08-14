@@ -25,7 +25,9 @@ const Signup = () => {
     const [lastName, setLastName] = useState('');
     const [phone, setPhone] = useState('');
     const [city, setCity] = useState('');
-    const [shippingAddress, setShippingAddress] = useState('');
+    const [homeAddress, setHomeAddress] = useState('');
+    const [thana, setThana] = useState('');
+    const [district, setDistrict] = useState('');
     const [companyName, setCompanyName] = useState('');
     const [dob, setDateOfBirth] = useState('');
     const [pin, setPin] = useState('');
@@ -54,7 +56,9 @@ const Signup = () => {
             return 'Phone number is required.';
         }
         if (!city.trim()) return 'City is required.';
-        if (!shippingAddress.trim()) return 'Shipping address is required.';
+        if (!homeAddress.trim()) return 'Home address is required.';
+        if (!thana.trim()) return 'Thana is required.';
+        if (!district.trim()) return 'District is required.';
         if (!companyName.trim()) return 'Company name is required.';
         if (!dob.trim()) return 'Date of birth is required.';
         if (!/^\d{4}$/.test(pin)) {
@@ -104,7 +108,10 @@ const Signup = () => {
             lastName.trim(),
             phone.trim(),
             city.trim(),
-            shippingAddress.trim(),
+            "",
+            homeAddress.trim(),
+            thana.trim(),
+            district.trim(),
             companyName.trim(),
             dob,
             pin,
@@ -192,7 +199,9 @@ const Signup = () => {
                                         { label: 'Last name', value: lastName, set: setLastName, type: 'text' },
                                         { label: 'Phone', value: phone, set: setPhone, type: 'tel' },
                                         { label: 'City', value: city, set: setCity, type: 'text' },
-                                        { label: 'Shipping address', value: shippingAddress, set: setShippingAddress, type: 'text' },
+                                        { label: 'Home address', value: homeAddress, set: setHomeAddress, type: 'text' },
+                                        { label: 'Thana', value: thana, set: setThana, type: 'text' },
+                                        { label: 'District', value: district, set: setDistrict, type: 'text' },
                                         { label: 'Company name', value: companyName, set: setCompanyName, type: 'text' },
                                     ].map((field) => (
                                         <div className="flex justify-center items-center mb-4 w-full max-w-md" key={field.label}>

@@ -6,7 +6,25 @@ import "react-toastify/dist/ReactToastify.css";
 import { useAuthContext } from "../../hooks/useAuthContext";
 import { useCart } from "../../context/CartContext";
 import { addLocalOrder } from "../../utils/localOrders";
+import {
+  composeAddress,
+  formatDeliveryPlace,
+  getDeliveryCharge,
+} from "../../utils/orderAddress";
+import OrderAddress from "../../Components/OrderAddress";
 import Modal from "./Modal";
+
+const emptyOrderDetails = {
+  name: "",
+  phone: "",
+  email: "",
+  homeAddress: "",
+  thana: "",
+  district: "",
+  deliveryPlace: "",
+  companyName: "",
+  requirements: "",
+};
 
 const Table = ({ data, rowsPerPage, onDelete, setIsModalOpen }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -164,16 +182,17 @@ const Cart = () => {
   const { user } = useAuthContext();
   const { cart, removeItem, clear, refresh } = useCart();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [orderDetails, setOrderDetails] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    address: "",
-    companyName: "",
-    requirements: "",
-  });
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [orderDetails, setOrderDetails] = useState(emptyOrderDetails);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+
+  const cartSubtotal = cart.reduce(
+    (total, item) => total + Number(item.totalPrice),
+    0
+  );
+  const deliveryCharge = getDeliveryCharge(orderDetails.deliveryPlace);
+  const orderTotal = cartSubtotal + deliveryCharge;
 
   useEffect(() => {
     refresh();
@@ -187,7 +206,13 @@ const Cart = () => {
           prev.name ||
           `${user.user.firstName || ""} ${user.user.lastName || ""}`.trim(),
         phone: prev.phone || user.user.phone || "",
-        address: prev.address || user.user.shippingAddress || "",
+        homeAddress:
+          prev.homeAddress ||
+          user.user.homeAddress ||
+          user.user.shippingAddress ||
+          "",
+        thana: prev.thana || user.user.thana || "",
+        district: prev.district || user.user.district || "",
         companyName: prev.companyName || user.user.companyName || "",
       }));
     }
@@ -197,7 +222,29 @@ const Cart = () => {
     removeItem(cartId);
   };
 
-  const handleOrderSubmit = async () => {
+  const handlePlaceOrder = () => {
+    if (cart.length === 0) {
+      toast.error("Your cart is empty.");
+      return;
+    }
+    if (!orderDetails.deliveryPlace) {
+      toast.error("Please select Inside Dhaka or Outside Dhaka.");
+      return;
+    }
+    if (
+      !orderDetails.homeAddress.trim() ||
+      !orderDetails.thana.trim() ||
+      !orderDetails.district.trim()
+    ) {
+      toast.error("Please fill in home address, thana and district.");
+      return;
+    }
+
+    setIsModalOpen(false);
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmOrder = async () => {
     if (cart.length === 0) {
       toast.error("Your cart is empty.");
       return;
@@ -205,16 +252,19 @@ const Cart = () => {
 
     setSubmitting(true);
     try {
-      const totalCost = cart
-        .reduce((total, item) => total + Number(item.totalPrice), 0)
-        .toFixed(2);
-
       const orderData = {
         userId: user?.user?._id || "guest",
         cartData: cart,
-        totalCost,
         status: "received",
         ...orderDetails,
+        address: composeAddress(
+          orderDetails.homeAddress,
+          orderDetails.thana,
+          orderDetails.district
+        ),
+        deliveryCharge,
+        subtotal: Number(cartSubtotal.toFixed(2)),
+        totalCost: Number(orderTotal.toFixed(2)),
       };
 
       const response = await axios.post(
@@ -227,19 +277,15 @@ const Cart = () => {
       clear();
 
       toast.success("Order placed successfully!");
-      setIsModalOpen(false);
-      setOrderDetails({
-        name: "",
-        phone: "",
-        email: "",
-        address: "",
-        companyName: "",
-        requirements: "",
-      });
+      setIsConfirmOpen(false);
+      setOrderDetails(emptyOrderDetails);
       navigate("/user/orderHistory");
     } catch (error) {
       console.error("Error placing order:", error);
-      toast.error("Failed to place the order. Please try again.");
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to place the order. Please try again."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -262,7 +308,7 @@ const Cart = () => {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            handleOrderSubmit();
+            handlePlaceOrder();
           }}
         >
           <div className="mb-4">
@@ -324,13 +370,86 @@ const Cart = () => {
             />
           </div>
           <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Delivery Location
+            </label>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <label className={`flex items-center gap-2 p-3 border rounded-md cursor-pointer hover:bg-gray-50 flex-1 ${
+                  orderDetails.deliveryPlace === "inside_dhaka"
+                    ? "border-gray-900 bg-gray-50"
+                    : "border-gray-300"
+                }`}>
+                <input
+                  type="checkbox"
+                  checked={orderDetails.deliveryPlace === "inside_dhaka"}
+                  onChange={() =>
+                    setOrderDetails({
+                      ...orderDetails,
+                      deliveryPlace: "inside_dhaka",
+                    })
+                  }
+                />
+                <span>Inside Dhaka (Tk. 80)</span>
+              </label>
+              <label className={`flex items-center gap-2 p-3 border rounded-md cursor-pointer hover:bg-gray-50 flex-1 ${
+                  orderDetails.deliveryPlace === "outside_dhaka"
+                    ? "border-gray-900 bg-gray-50"
+                    : "border-gray-300"
+                }`}>
+                <input
+                  type="checkbox"
+                  checked={orderDetails.deliveryPlace === "outside_dhaka"}
+                  onChange={() =>
+                    setOrderDetails({
+                      ...orderDetails,
+                      deliveryPlace: "outside_dhaka",
+                    })
+                  }
+                />
+                <span>Outside Dhaka (Tk. 120)</span>
+              </label>
+            </div>
+          </div>
+          <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700">
-              Full Shipping Address
+              Home Address
             </label>
             <textarea
-              value={orderDetails.address}
+              value={orderDetails.homeAddress}
               onChange={(e) =>
-                setOrderDetails({ ...orderDetails, address: e.target.value })
+                setOrderDetails({
+                  ...orderDetails,
+                  homeAddress: e.target.value,
+                })
+              }
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+              required
+              rows={2}
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Thana
+            </label>
+            <input
+              type="text"
+              value={orderDetails.thana}
+              onChange={(e) =>
+                setOrderDetails({ ...orderDetails, thana: e.target.value })
+              }
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">
+              District
+            </label>
+            <input
+              type="text"
+              value={orderDetails.district}
+              onChange={(e) =>
+                setOrderDetails({ ...orderDetails, district: e.target.value })
               }
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
               required
@@ -363,13 +482,87 @@ const Cart = () => {
             </button>
             <button
               type="submit"
-              disabled={submitting}
-              className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+              className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-700"
             >
-              {submitting ? "Placing..." : "Place Order"}
+              Place Order
             </button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={isConfirmOpen}
+        onClose={() => !submitting && setIsConfirmOpen(false)}
+        maxWidthClass="max-w-2xl"
+      >
+        <h2 className="text-2xl font-semibold mb-4">Confirm Order</h2>
+        <div className="overflow-x-auto mb-4">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="bg-gray-100 text-gray-600 uppercase">
+                <th className="p-2 text-left">Item</th>
+                <th className="p-2 text-center">Qty</th>
+                <th className="p-2 text-right">Price</th>
+                <th className="p-2 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cart.map((item) => (
+                <tr key={item.cartId} className="border-b">
+                  <td className="p-2">{item.name}</td>
+                  <td className="p-2 text-center">x{item.qty}</td>
+                  <td className="p-2 text-right">
+                    Tk. {Number(item.price).toFixed(2)}
+                  </td>
+                  <td className="p-2 text-right">
+                    Tk. {Number(item.totalPrice).toFixed(2)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="space-y-1 text-sm mb-4 border-t pt-3">
+          <div className="flex justify-between">
+            <span>Subtotal</span>
+            <span>Tk. {cartSubtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>
+              Delivery Charge ({formatDeliveryPlace(orderDetails.deliveryPlace)})
+            </span>
+            <span>Tk. {deliveryCharge.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between font-semibold text-base pt-2">
+            <span>Total</span>
+            <span>Tk. {orderTotal.toFixed(2)}</span>
+          </div>
+        </div>
+        <div className="text-sm text-gray-600 mb-4">
+          <p className="font-semibold text-gray-800 mb-1">Deliver to</p>
+          <OrderAddress order={orderDetails} />
+        </div>
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+            disabled={submitting}
+            onClick={() => {
+              setIsConfirmOpen(false);
+              setIsModalOpen(true);
+            }}
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            disabled={submitting}
+            className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+            onClick={handleConfirmOrder}
+          >
+            {submitting ? "Confirming..." : "Confirm Order"}
+          </button>
+        </div>
       </Modal>
     </div>
   );

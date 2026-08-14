@@ -2,6 +2,7 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuthContext } from "../../hooks/useAuthContext";
+import OrderAddress from "../../Components/OrderAddress";
 
 const Table = ({ data, rowsPerPage }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -148,6 +149,7 @@ const Table = ({ data, rowsPerPage }) => {
               <th className="p-4 text-center">Username</th>
               <th className="p-4 text-center">Phone</th>
               <th className="p-4 text-center">City</th>
+              <th className="p-4 text-center">Address</th>
               <th className="p-4 text-center">Date of Birth</th>
               <th className="p-4 text-center">Role</th>
               <th className="p-4 text-center">View</th>
@@ -172,6 +174,9 @@ const Table = ({ data, rowsPerPage }) => {
                 <td className="p-4 text-center">{user.userName}</td>
                 <td className="p-4 text-center">{user.phone}</td>
                 <td className="p-4 text-center">{user.city}</td>
+                <td className="p-4 text-center">
+                  <OrderAddress order={user} showDeliveryPlace={false} />
+                </td>
                 <td className="p-4 text-center">{user?.dob || "Not given"}</td>
                 <td className="p-4 text-center">{user.role}</td>
                 <td className="p-4 text-center">

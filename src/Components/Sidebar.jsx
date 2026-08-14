@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
 import { FaHome, FaShoppingCart, FaUser } from "react-icons/fa";
 import { ImProfile } from "react-icons/im";
-import { IoCheckmarkDoneCircleOutline, IoHome } from "react-icons/io5";
+import { IoCheckmarkDoneCircleOutline, IoChevronDown, IoHome } from "react-icons/io5";
 import {
   MdAdd,
+  MdArticle,
   MdCallReceived,
   MdCategory,
+  MdCookie,
+  MdGavel,
   MdHistoryEdu,
+  MdInfoOutline,
   MdOutlineLogout,
   MdOutlineNotifications,
   MdOutlineProductionQuantityLimits,
+  MdPrivacyTip,
   MdTrendingDown,
 } from "react-icons/md";
 import { Link, useLocation } from "react-router-dom";
@@ -26,6 +31,7 @@ const Sidebar = ({ onClose }) => {
   const [homeBanner, setHomeBanner] = useState("");
   const [homeSlogan, setHomeSlogan] = useState("");
   const [homeSmallText, setHomeSmallText] = useState("");
+  const [siteCustomOpen, setSiteCustomOpen] = useState(false);
 
   const { user } = useAuthContext();
 
@@ -42,6 +48,28 @@ const Sidebar = ({ onClose }) => {
       setUserView(user?.user?.userView);
     }
   }, [user?.user?.role, user?.user?.userView]);
+
+  const siteCustomPaths = [
+    "/dashboard/admin/adminHome",
+    "/dashboard/admin/aboutUs",
+    "/dashboard/admin/termsOfUse",
+    "/dashboard/admin/privacyPolicy",
+    "/dashboard/admin/cookiePolicy",
+  ];
+  const isSiteCustomActive =
+    siteCustomPaths.includes(location.pathname) ||
+    location.pathname.startsWith("/dashboard/admin/blogs");
+
+  useEffect(() => {
+    if (isSiteCustomActive) {
+      setSiteCustomOpen(true);
+    }
+  }, [isSiteCustomActive]);
+
+  const subLinkClass = (active) =>
+    `rounded-lg px-2 py-1 flex gap-2 items-center dashboard-link text-base ${
+      active ? "bg-white text-black" : "text-gray-200"
+    }`;
 
   // Fetch current site data on component mount
   useEffect(() => {
@@ -88,16 +116,67 @@ const Sidebar = ({ onClose }) => {
       </div>
       {role === "admin" && (
         <div className="flex flex-col gap-2 pl-2">
-          <Link
-            to="/dashboard/admin/adminHome"
-            onClick={handleLinkClick}
-            className={`rounded-lg px-1 py-1 flex gap-2 items-center dashboard-link ${location.pathname === "/dashboard/admin/adminHome"
-                ? "bg-white text-black"
-                : ""
+          <div>
+            <button
+              type="button"
+              onClick={() => setSiteCustomOpen((open) => !open)}
+              className={`w-full rounded-lg px-1 py-1 flex gap-2 items-center dashboard-link ${
+                isSiteCustomActive ? "bg-white/10" : ""
               }`}
-          >
-            <IoHome /> Site Customization
-          </Link>
+            >
+              <IoHome />
+              <span className="flex-1 text-left">Site Customization</span>
+              <IoChevronDown
+                className={`transition-transform ${siteCustomOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+            {siteCustomOpen && (
+              <div className="mt-1 ml-3 pl-3 border-l border-white/20 flex flex-col gap-1">
+                <Link
+                  to="/dashboard/admin/adminHome"
+                  onClick={handleLinkClick}
+                  className={subLinkClass(location.pathname === "/dashboard/admin/adminHome")}
+                >
+                  <IoHome /> Homepage
+                </Link>
+                <Link
+                  to="/dashboard/admin/aboutUs"
+                  onClick={handleLinkClick}
+                  className={subLinkClass(location.pathname === "/dashboard/admin/aboutUs")}
+                >
+                  <MdInfoOutline /> About us
+                </Link>
+                <Link
+                  to="/dashboard/admin/termsOfUse"
+                  onClick={handleLinkClick}
+                  className={subLinkClass(location.pathname === "/dashboard/admin/termsOfUse")}
+                >
+                  <MdGavel /> Terms of use
+                </Link>
+                <Link
+                  to="/dashboard/admin/privacyPolicy"
+                  onClick={handleLinkClick}
+                  className={subLinkClass(location.pathname === "/dashboard/admin/privacyPolicy")}
+                >
+                  <MdPrivacyTip /> Privacy policy
+                </Link>
+                <Link
+                  to="/dashboard/admin/cookiePolicy"
+                  onClick={handleLinkClick}
+                  className={subLinkClass(location.pathname === "/dashboard/admin/cookiePolicy")}
+                >
+                  <MdCookie /> Cookie policy
+                </Link>
+                <Link
+                  to="/dashboard/admin/blogs"
+                  onClick={handleLinkClick}
+                  className={subLinkClass(location.pathname.startsWith("/dashboard/admin/blogs"))}
+                >
+                  <MdArticle /> Blogs
+                </Link>
+              </div>
+            )}
+          </div>
           <Link
             to="/dashboard/admin/category"
             onClick={handleLinkClick}

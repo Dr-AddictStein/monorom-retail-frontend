@@ -25,6 +25,13 @@ import AllProducts from "../Pages/AllProducts";
 import AdminRestock from "../Pages/AdminDashboard/AdminRestock";
 import AdminNotificationSender from "../Pages/AdminDashboard/AdminNotificationSender";
 import LowestOrderProducts from "../Pages/AdminDashboard/LowestOrderProducts";
+import AdminCmsPage from "../Pages/AdminDashboard/AdminCmsPage";
+import AdminBlogs from "../Pages/AdminDashboard/AdminBlogs";
+import AdminBlogEditor from "../Pages/AdminDashboard/AdminBlogEditor";
+import AdminBlogView from "../Pages/AdminDashboard/AdminBlogView";
+import PublicCmsPage from "../Pages/PublicCmsPage";
+import PublicBlogs from "../Pages/PublicBlogs";
+import PublicBlogDetails from "../Pages/PublicBlogDetails";
 
 export const router = createBrowserRouter([
     {
@@ -56,6 +63,30 @@ export const router = createBrowserRouter([
                 element: <AllProducts />,
             },
             {
+                path: "/about-us",
+                element: <PublicCmsPage pageKey="aboutUs" />,
+            },
+            {
+                path: "/terms-of-use",
+                element: <PublicCmsPage pageKey="termsOfUse" />,
+            },
+            {
+                path: "/privacy-policy",
+                element: <PublicCmsPage pageKey="privacyPolicy" />,
+            },
+            {
+                path: "/cookie-policy",
+                element: <PublicCmsPage pageKey="cookiePolicy" />,
+            },
+            {
+                path: "/blogs",
+                element: <PublicBlogs />,
+            },
+            {
+                path: "/blogs/:slug",
+                element: <PublicBlogDetails />,
+            },
+            {
                 path: "/user/cart",
                 element: <Cart />,
             },
@@ -78,6 +109,38 @@ export const router = createBrowserRouter([
             {
                 path: '/dashboard/admin/adminHome',
                 element: <AdminHome />
+            },
+            {
+                path: '/dashboard/admin/aboutUs',
+                element: <AdminCmsPage pageKey="aboutUs" />
+            },
+            {
+                path: '/dashboard/admin/termsOfUse',
+                element: <AdminCmsPage pageKey="termsOfUse" />
+            },
+            {
+                path: '/dashboard/admin/privacyPolicy',
+                element: <AdminCmsPage pageKey="privacyPolicy" />
+            },
+            {
+                path: '/dashboard/admin/cookiePolicy',
+                element: <AdminCmsPage pageKey="cookiePolicy" />
+            },
+            {
+                path: '/dashboard/admin/blogs',
+                element: <AdminBlogs />
+            },
+            {
+                path: '/dashboard/admin/blogs/new',
+                element: <AdminBlogEditor />
+            },
+            {
+                path: '/dashboard/admin/blogs/:id/edit',
+                element: <AdminBlogEditor />
+            },
+            {
+                path: '/dashboard/admin/blogs/:id',
+                element: <AdminBlogView />
             },
             {
                 path: '/dashboard/admin/category',

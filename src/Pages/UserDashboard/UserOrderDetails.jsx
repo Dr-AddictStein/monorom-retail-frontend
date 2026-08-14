@@ -2,6 +2,7 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuthContext } from "../../hooks/useAuthContext";
+import { formatDeliveryPlace, formatOrderAddress } from "../../utils/orderAddress";
 
 const UserOrderDetails = () => {
   const { id } = useParams();
@@ -355,7 +356,12 @@ const UserOrderDetails = () => {
               <div><strong>Company Name:</strong> ${orderDetails.companyName}</div>
               <div><strong>Email:</strong> ${orderDetails.email}</div>
               <div><strong>Phone:</strong> ${orderDetails.phone}</div>
-              <div><strong>Shipping Address:</strong> ${orderDetails.shippingAddress}</div>
+              <div><strong>Home Address:</strong> ${orderDetails.homeAddress || formatOrderAddress(orderDetails)}</div>
+              <div><strong>Thana:</strong> ${orderDetails.thana || "N/A"}</div>
+              <div><strong>District:</strong> ${orderDetails.district || "N/A"}</div>
+              <div><strong>Delivery:</strong> ${formatDeliveryPlace(orderDetails.deliveryPlace) || "N/A"}</div>
+              <div><strong>Subtotal:</strong> ${parseFloat(orderDetails.subtotal || orderDetails.totalCost).toFixed(2)}/-</div>
+              <div><strong>Delivery Charge:</strong> ${parseFloat(orderDetails.deliveryCharge || 0).toFixed(2)}/-</div>
               <div><strong>Total Cost:</strong> ${parseFloat(orderDetails.totalCost).toFixed(2)}/-</div>
               <div><strong>Status:</strong> ${orderDetails.status}</div>
               <div><strong>Requirements:</strong> ${orderDetails.requirements || 'N/A'}</div>
@@ -454,7 +460,24 @@ const UserOrderDetails = () => {
           <strong>Phone:</strong> {orderDetails.phone}
         </div>
         <div className="mb-2">
-          <strong>Shipping Address:</strong> {orderDetails.shippingAddress}
+          <strong>Home Address:</strong> {orderDetails.homeAddress || formatOrderAddress(orderDetails)}
+        </div>
+        <div className="mb-2">
+          <strong>Thana:</strong> {orderDetails.thana || "N/A"}
+        </div>
+        <div className="mb-2">
+          <strong>District:</strong> {orderDetails.district || "N/A"}
+        </div>
+        <div className="mb-2">
+          <strong>Delivery:</strong> {formatDeliveryPlace(orderDetails.deliveryPlace) || "N/A"}
+        </div>
+        <div className="mb-2">
+          <strong>Subtotal:</strong>{" "}
+          {parseFloat(orderDetails.subtotal || orderDetails.totalCost).toFixed(2)}/-
+        </div>
+        <div className="mb-2">
+          <strong>Delivery Charge:</strong>{" "}
+          {parseFloat(orderDetails.deliveryCharge || 0).toFixed(2)}/-
         </div>
         <div className="mb-2">
           <strong>Total Cost:</strong> {" "}

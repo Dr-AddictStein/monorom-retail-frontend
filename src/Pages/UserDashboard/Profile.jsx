@@ -15,6 +15,9 @@ const Profile = () => {
     phone: "",
     city: "",
     shippingAddress: "",
+    homeAddress: "",
+    thana: "",
+    district: "",
     companyName: "",
     role: "",
     image: "",
@@ -30,7 +33,15 @@ const Profile = () => {
         `${import.meta.env.VITE_BACKEND_URL}/api/user/getSingleUser/${user?.user?._id
         }`
       );
-      setUserData(response.data.data);
+      setUserData({
+        ...response.data.data,
+        homeAddress:
+          response.data.data.homeAddress ||
+          response.data.data.shippingAddress ||
+          "",
+        thana: response.data.data.thana || "",
+        district: response.data.data.district || "",
+      });
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
@@ -193,14 +204,38 @@ const Profile = () => {
                 className="w-full p-2 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+            <div className="col-span-1 sm:col-span-2">
+              <label className="block text-gray-600 font-medium mb-1 sm:mb-2">
+                Home Address
+              </label>
+              <textarea
+                name="homeAddress"
+                value={userData.homeAddress}
+                onChange={handleInputChange}
+                rows={2}
+                className="w-full p-2 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
             <div>
               <label className="block text-gray-600 font-medium mb-1 sm:mb-2">
-                Shipping Address
+                Thana
               </label>
               <input
                 type="text"
-                name="shippingAddress"
-                value={userData.shippingAddress}
+                name="thana"
+                value={userData.thana || ""}
+                onChange={handleInputChange}
+                className="w-full p-2 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-600 font-medium mb-1 sm:mb-2">
+                District
+              </label>
+              <input
+                type="text"
+                name="district"
+                value={userData.district || ""}
                 onChange={handleInputChange}
                 className="w-full p-2 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
