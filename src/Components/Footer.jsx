@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { BACKEND_URL } from "@/config";
 
 const Footer = () => {
     const [logo, setLogo] = useState("");
@@ -8,7 +9,7 @@ const Footer = () => {
         const fetchSiteData = async () => {
             try {
                 const response = await fetch(
-                    `${import.meta.env.VITE_BACKEND_URL}/api/siteData/getSiteData`
+                    `${BACKEND_URL}/api/siteData/getSiteData`
                 );
                 const data = await response.json();
                 setLogo(data.logo);

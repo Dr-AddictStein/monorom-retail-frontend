@@ -4,6 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthContext } from "../../hooks/useAuthContext";
 import { uploadFile } from "../../utils/uploadFile";
+import { BACKEND_URL } from "@/config";
 
 const AdminHome = () => {
   const [logo, setLogo] = useState("");
@@ -17,7 +18,7 @@ const AdminHome = () => {
   useEffect(() => {
     const fetchSiteData = async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/siteData/getSiteData`
+        `${BACKEND_URL}/api/siteData/getSiteData`
       );
       const data = await response.json();
       setLogo(data.logo);
@@ -33,7 +34,7 @@ const AdminHome = () => {
   // Update functions for each field with toast notifications
   const updateLogo = async () => {
     const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/siteData/updateLogo`,
+      `${BACKEND_URL}/api/siteData/updateLogo`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -45,7 +46,7 @@ const AdminHome = () => {
 
   const updateHomeBanner = async () => {
     const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/siteData/updateHomeBanner`,
+      `${BACKEND_URL}/api/siteData/updateHomeBanner`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -57,7 +58,7 @@ const AdminHome = () => {
 
   const updateHomeSlogan = async () => {
     const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/siteData/updateHomeSlogan`,
+      `${BACKEND_URL}/api/siteData/updateHomeSlogan`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -69,7 +70,7 @@ const AdminHome = () => {
 
   const updateHomeSmallText = async () => {
     const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/siteData/updateHomeSmallText`,
+      `${BACKEND_URL}/api/siteData/updateHomeSmallText`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -81,7 +82,7 @@ const AdminHome = () => {
 
   const updateLoginBanner = async () => {
     const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/siteData/updateLoginBanner`,
+      `${BACKEND_URL}/api/siteData/updateLoginBanner`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -94,7 +95,7 @@ const AdminHome = () => {
   const updateSignUpBanner = async () => {
     console.log("AAAAAA", signUpBanner)
     const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/siteData/updateSignUpBanner`,
+      `${BACKEND_URL}/api/siteData/updateSignUpBanner`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

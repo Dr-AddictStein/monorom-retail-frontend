@@ -11,6 +11,7 @@ import SignupModal from "../Components/SignupModal";
 import { RichTextContent } from "../Components/RichTextEditor";
 import { getProductPrice } from "../utils/productPrice";
 import { stripHtml } from "../utils/slugify";
+import { BACKEND_URL } from "@/config";
 
 const buildCartItem = (product, qty, user, categoryName = "") => ({
   productId: product._id,
@@ -88,7 +89,7 @@ const ProductDetails = () => {
   const fetchProduct = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/${slug}`
+        `${BACKEND_URL}/api/product/${slug}`
       );
       if (!response.ok) throw new Error("Failed to fetch product");
       const data = await response.json();
@@ -105,7 +106,7 @@ const ProductDetails = () => {
   const fetchCategory = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/category/${product?.category}`
+        `${BACKEND_URL}/api/category/${product?.category}`
       );
       if (!response.ok) throw new Error("Failed to fetch category");
       const data = await response.json();
@@ -125,7 +126,7 @@ const ProductDetails = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/getProductsByCategoryId/${categoryId}`
+        `${BACKEND_URL}/api/product/getProductsByCategoryId/${categoryId}`
       );
       if (!response.ok) throw new Error("Failed to fetch related products");
       const data = await response.json();

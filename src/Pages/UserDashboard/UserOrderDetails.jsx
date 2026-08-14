@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuthContext } from "../../hooks/useAuthContext";
 import { formatDeliveryPlace, formatOrderAddress } from "../../utils/orderAddress";
+import { BACKEND_URL } from "@/config";
 
 const UserOrderDetails = () => {
   const { id } = useParams();
@@ -13,7 +14,7 @@ const UserOrderDetails = () => {
   const fetchOrderDetails = async () => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL
+        `${BACKEND_URL
         }/api/order/getOrderDetailsByAdmin/${id}`
       );
       setOrderDetails(response.data);

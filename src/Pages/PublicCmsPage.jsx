@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { RichTextContent } from "../Components/RichTextEditor";
 import { CMS_PAGES } from "../utils/cmsPages";
+import { BACKEND_URL } from "@/config";
 
 const PublicCmsPage = ({ pageKey }) => {
   const page = CMS_PAGES[pageKey];
@@ -13,7 +14,7 @@ const PublicCmsPage = ({ pageKey }) => {
       try {
         setLoading(true);
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/siteData/getSiteData`
+          `${BACKEND_URL}/api/siteData/getSiteData`
         );
         if (!response.ok) throw new Error("Failed to fetch page");
         const data = await response.json();

@@ -5,6 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { RichTextContent } from "../../Components/RichTextEditor";
 import { useAuthContext } from "../../hooks/useAuthContext";
 import { getProductPrice } from "../../utils/productPrice";
+import { BACKEND_URL } from "@/config";
 
 const ViewProduct = () => {
   const { id } = useParams();
@@ -19,14 +20,14 @@ const ViewProduct = () => {
   const fetchData = async () => {
     try {
       const productResponse = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/${id}`
+        `${BACKEND_URL}/api/product/${id}`
       );
       if (!productResponse.ok) throw new Error("Failed to fetch product");
       const productData = await productResponse.json();
       setProduct(productData);
 
       const categoriesResponse = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/category/`
+        `${BACKEND_URL}/api/category/`
       );
       if (!categoriesResponse.ok) throw new Error("Failed to fetch categories");
       const categoriesData = await categoriesResponse.json();

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
+import { BACKEND_URL } from "@/config";
 
 const SEO_FIELDS = [
   {
@@ -79,7 +80,7 @@ const ProductSeoFields = ({
             };
 
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}${generateEndpoint}`,
+        `${BACKEND_URL}${generateEndpoint}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

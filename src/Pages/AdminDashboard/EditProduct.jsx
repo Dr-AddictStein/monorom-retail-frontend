@@ -9,6 +9,7 @@ import { useAuthContext } from "../../hooks/useAuthContext";
 import { getProductPrice } from "../../utils/productPrice";
 import { toSlug } from "../../utils/slugify";
 import { uploadFile } from "../../utils/uploadFile";
+import { BACKEND_URL } from "@/config";
 
 const EditProduct = () => {
   const { id } = useParams();
@@ -52,7 +53,7 @@ const EditProduct = () => {
   const fetchCategories = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/category/`
+        `${BACKEND_URL}/api/category/`
       );
       if (!response.ok) throw new Error("Failed to fetch categories");
       const data = await response.json();
@@ -66,7 +67,7 @@ const EditProduct = () => {
     try {
       setProductLoaded(false);
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/${id}`
+        `${BACKEND_URL}/api/product/${id}`
       );
       if (!response.ok) throw new Error("Failed to fetch product");
       const data = await response.json();
@@ -241,7 +242,7 @@ const EditProduct = () => {
   const updateProduct = async (data) => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/${id}`,
+        `${BACKEND_URL}/api/product/${id}`,
         {
           method: "PATCH",
           headers: {

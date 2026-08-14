@@ -4,6 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AdminGate from "../../Components/AdminGate";
 import { stripHtml } from "../../utils/slugify";
+import { BACKEND_URL } from "@/config";
 
 const AdminBlogs = () => {
   const [blogs, setBlogs] = useState([]);
@@ -13,7 +14,7 @@ const AdminBlogs = () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/blog`
+        `${BACKEND_URL}/api/blog`
       );
       if (!response.ok) throw new Error("Failed to fetch blogs");
       const data = await response.json();
@@ -37,7 +38,7 @@ const AdminBlogs = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/blog/${id}`,
+        `${BACKEND_URL}/api/blog/${id}`,
         { method: "DELETE" }
       );
       if (!response.ok) throw new Error("Failed to delete blog");

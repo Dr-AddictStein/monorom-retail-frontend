@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "./useAuthContext";
+import { BACKEND_URL } from "@/config";
 
 export const useSignup = () => {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ export const useSignup = () => {
   const sendSignupOtp = async (phone) => {
     setError(null);
     const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/user/send-signup-otp`,
+      `${BACKEND_URL}/api/user/send-signup-otp`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -29,7 +30,7 @@ export const useSignup = () => {
   const verifySignupOtp = async (phone, code) => {
     setError(null);
     const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/user/verify-signup-otp`,
+      `${BACKEND_URL}/api/user/verify-signup-otp`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -64,7 +65,7 @@ export const useSignup = () => {
     setError(null);
 
     const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/user/signup`,
+      `${BACKEND_URL}/api/user/signup`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -118,7 +119,7 @@ export const useSignup = () => {
     setError(null);
 
     const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/user/gSignup`,
+      `${BACKEND_URL}/api/user/gSignup`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },

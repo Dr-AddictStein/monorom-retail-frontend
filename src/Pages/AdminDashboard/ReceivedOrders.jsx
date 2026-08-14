@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useAuthContext } from "../../hooks/useAuthContext";
 import { FaSearch } from "react-icons/fa";
 import OrderAddress from "../../Components/OrderAddress";
+import { BACKEND_URL } from "@/config";
 
 const ReceivedOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -17,7 +18,7 @@ const ReceivedOrders = () => {
   const fetchOrders = async () => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/order/getAllReceivedOrders`
+        `${BACKEND_URL}/api/order/getAllReceivedOrders`
       );
       setOrders(response.data);
     } catch (error) {
@@ -33,7 +34,7 @@ const ReceivedOrders = () => {
     try {
       await axios.patch(
         `${
-          import.meta.env.VITE_BACKEND_URL
+          BACKEND_URL
         }/api/order/markAsCompleted/${orderId}`
       );
       fetchOrders(); // Refetch orders after marking one as completed
@@ -44,7 +45,7 @@ const ReceivedOrders = () => {
   const handleDelete = async (orderId) => {
     try {
       await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/order/deleteOrder/${orderId}`
+        `${BACKEND_URL}/api/order/deleteOrder/${orderId}`
       );
       fetchOrders(); // Refetch orders after marking one as completed
     } catch (error) {

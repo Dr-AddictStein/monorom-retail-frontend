@@ -8,6 +8,7 @@ import { useCart } from "../context/CartContext";
 import { getProductPrice } from "../utils/productPrice";
 import offerImg from "../../public/offer-removebg-preview.png";
 import outOfStockImg from "../../public/out of stock.png";
+import { BACKEND_URL } from "@/config";
 
 const AllProducts = () => {
   const [logo, setLogo] = useState("");
@@ -27,7 +28,7 @@ const AllProducts = () => {
   useEffect(() => {
     const fetchSiteData = async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/siteData/getSiteData`
+        `${BACKEND_URL}/api/siteData/getSiteData`
       );
       const data = await response.json();
       setLogo(data.logo);
@@ -45,7 +46,7 @@ const AllProducts = () => {
   const fetchProducts = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product`
+        `${BACKEND_URL}/api/product`
       );
       if (!response.ok) throw new Error("Failed to fetch Products");
       const data = await response.json();

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthContext } from "../../hooks/useAuthContext";
+import { BACKEND_URL } from "@/config";
 
 const AdminProduct = () => {
   const [products, setProducts] = useState([]);
@@ -21,7 +22,7 @@ const AdminProduct = () => {
   const fetchCategory = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/category`
+        `${BACKEND_URL}/api/category`
       );
       if (!response.ok) throw new Error("Failed to fetch categories");
       const data = await response.json();
@@ -35,7 +36,7 @@ const AdminProduct = () => {
   const fetchProducts = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/`
+        `${BACKEND_URL}/api/product/`
       );
       if (!response.ok) throw new Error("Failed to fetch products");
       const data = await response.json();
@@ -57,7 +58,7 @@ const AdminProduct = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/bulkUpdate`,
+        `${BACKEND_URL}/api/product/bulkUpdate`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -83,7 +84,7 @@ const AdminProduct = () => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/product/${id}`,
+          `${BACKEND_URL}/api/product/${id}`,
           {
             method: "DELETE",
           }

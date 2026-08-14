@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthContext } from "../../hooks/useAuthContext";
+import { BACKEND_URL } from "@/config";
 
 const AdminNotificationSender = () => {
   const [title, setTitle] = useState("");
@@ -52,7 +53,7 @@ const AdminNotificationSender = () => {
     
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/notifications/send`,
+        `${BACKEND_URL}/api/notifications/send`,
         {
           method: "POST",
           headers: {

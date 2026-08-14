@@ -3,6 +3,7 @@ import { FaHome, FaShoppingCart, FaUser } from "react-icons/fa";
 import { ImProfile } from "react-icons/im";
 import { IoCheckmarkDoneCircleOutline, IoChevronDown, IoHome } from "react-icons/io5";
 import {
+import { BACKEND_URL } from "@/config";
   MdAdd,
   MdArticle,
   MdCallReceived,
@@ -76,7 +77,7 @@ const Sidebar = ({ onClose }) => {
     const fetchSiteData = async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/siteData/getSiteData`
+          `${BACKEND_URL}/api/siteData/getSiteData`
         );
         const data = await response.json();
         console.log('Site data fetched:', data);

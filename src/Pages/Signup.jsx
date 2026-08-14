@@ -3,6 +3,7 @@ import { FaArrowLeft } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useSignup } from "../hooks/useSignup";
 import { useOtpResendCooldown } from "../hooks/useOtpResendCooldown";
+import { BACKEND_URL } from "@/config";
 
 /** @typedef {'main' | 'otp'} SignupFlow */
 
@@ -12,7 +13,7 @@ const Signup = () => {
     useEffect(() => {
         const fetchSiteData = async () => {
             const response = await fetch(
-                `${import.meta.env.VITE_BACKEND_URL}/api/siteData/getSiteData`
+                `${BACKEND_URL}/api/siteData/getSiteData`
             );
             const data = await response.json();
             setSignUpBanner(data.signUpBanner);

@@ -4,6 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 import AdminGate from "../../Components/AdminGate";
 import RichTextEditor, { RichTextContent } from "../../Components/RichTextEditor";
 import { CMS_PAGES } from "../../utils/cmsPages";
+import { BACKEND_URL } from "@/config";
 
 const AdminCmsPage = ({ pageKey }) => {
   const page = CMS_PAGES[pageKey];
@@ -17,7 +18,7 @@ const AdminCmsPage = ({ pageKey }) => {
     try {
       setLoading(true);
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/siteData/getSiteData`
+        `${BACKEND_URL}/api/siteData/getSiteData`
       );
       if (!response.ok) throw new Error("Failed to fetch page content");
       const data = await response.json();
@@ -41,7 +42,7 @@ const AdminCmsPage = ({ pageKey }) => {
     try {
       setSaving(true);
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/siteData/updatePageContent`,
+        `${BACKEND_URL}/api/siteData/updatePageContent`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },

@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { useCart } from "../context/CartContext";
 import { getProductPrice } from "../utils/productPrice";
+import { BACKEND_URL } from "@/config";
 
 const Category = () => {
   const { user } = useAuthContext();
@@ -23,7 +24,7 @@ const Category = () => {
   const fetchCategory = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/category/${slug}`
+        `${BACKEND_URL}/api/category/${slug}`
       );
       if (!response.ok) throw new Error("Failed to fetch Category");
       const data = await response.json();
@@ -43,7 +44,7 @@ const Category = () => {
     }
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/getProductsByCategoryId/${categoryId}`
+        `${BACKEND_URL}/api/product/getProductsByCategoryId/${categoryId}`
       );
       if (!response.ok) throw new Error("Failed to fetch products");
       const data = await response.json();

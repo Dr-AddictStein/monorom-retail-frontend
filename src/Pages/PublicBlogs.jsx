@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { stripHtml } from "../utils/slugify";
+import { BACKEND_URL } from "@/config";
 
 const PublicBlogs = () => {
   const [blogs, setBlogs] = useState([]);
@@ -12,7 +13,7 @@ const PublicBlogs = () => {
       try {
         setLoading(true);
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/blog/public`
+          `${BACKEND_URL}/api/blog/public`
         );
         if (!response.ok) throw new Error("Failed to fetch blogs");
         const data = await response.json();

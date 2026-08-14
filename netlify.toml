@@ -2,6 +2,20 @@
   command = "npm run build"
   publish = "dist"
 
+# Empty VITE_BACKEND_URL → shop calls same-origin `/api/...` (see proxy below).
+# If this is also set in the Netlify UI, that value wins — leave it blank there too.
+[build.environment]
+  VITE_BACKEND_URL = ""
+  VITE_UPLOAD_BACKEND_URL = "https://api.monorom.store"
+
+# Same-origin API proxy. Must stay above the SPA fallback.
+# Browsers (and tracker blockers) talk to deliymug.com only; Netlify fetches Vercel.
+[[redirects]]
+  from = "/api/*"
+  to = "https://monorom-retail-backend.vercel.app/api/:splat"
+  status = 200
+  force = true
+
 # SPA fallback — required so React Router paths work on refresh / direct URL
 [[redirects]]
   from = "/*"

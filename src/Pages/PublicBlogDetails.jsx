@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { Link, useParams } from "react-router-dom";
 import { RichTextContent } from "../Components/RichTextEditor";
 import { stripHtml } from "../utils/slugify";
+import { BACKEND_URL } from "@/config";
 
 const PublicBlogDetails = () => {
   const { slug } = useParams();
@@ -16,7 +17,7 @@ const PublicBlogDetails = () => {
         setLoading(true);
         setNotFound(false);
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/blog/${slug}`
+          `${BACKEND_URL}/api/blog/${slug}`
         );
         if (!response.ok) {
           setNotFound(true);

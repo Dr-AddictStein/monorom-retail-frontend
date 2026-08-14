@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useAuthContext } from "../hooks/useAuthContext";
 import Restricted from "./Restricted";
 import UnAuthorized from "./UnAuthorized";
+import { BACKEND_URL } from "@/config";
 
 const Home = () => {
   const { user } = useAuthContext();
@@ -19,7 +20,7 @@ const Home = () => {
   useEffect(() => {
     const fetchSiteData = async () => {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/siteData/getSiteData`
+        `${BACKEND_URL}/api/siteData/getSiteData`
       );
       const data = await response.json();
       setLogo(data.logo);
@@ -33,7 +34,7 @@ const Home = () => {
   const fetchData = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/category/homePageData`
+        `${BACKEND_URL}/api/category/homePageData`
       );
       if (!response.ok) throw new Error("Failed to fetch products");
       const data = await response.json();

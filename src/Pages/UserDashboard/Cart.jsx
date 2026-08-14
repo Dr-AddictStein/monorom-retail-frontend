@@ -7,6 +7,7 @@ import { useAuthContext } from "../../hooks/useAuthContext";
 import { useCart } from "../../context/CartContext";
 import { addLocalOrder } from "../../utils/localOrders";
 import {
+import { BACKEND_URL } from "@/config";
   composeAddress,
   formatDeliveryPlace,
   getDeliveryCharge,
@@ -268,7 +269,7 @@ const Cart = () => {
       };
 
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/order/createOrder`,
+        `${BACKEND_URL}/api/order/createOrder`,
         orderData
       );
 

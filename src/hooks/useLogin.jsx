@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "./useAuthContext";
+import { BACKEND_URL } from "@/config";
 
 const navigateAfterLogin = (navigate, json, url) => {
   if (url) {
@@ -21,7 +22,7 @@ export const useLogin = () => {
     setError(null);
 
     const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/user/login`,
+      `${BACKEND_URL}/api/user/login`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -42,7 +43,7 @@ export const useLogin = () => {
   const sendForgotPinOtp = async (phone) => {
     setError(null);
     const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/user/send-forgot-pin-otp`,
+      `${BACKEND_URL}/api/user/send-forgot-pin-otp`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -60,7 +61,7 @@ export const useLogin = () => {
   const verifyForgotPinOtp = async (phone, code) => {
     setError(null);
     const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/user/verify-forgot-pin-otp`,
+      `${BACKEND_URL}/api/user/verify-forgot-pin-otp`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -79,7 +80,7 @@ export const useLogin = () => {
   const resetWebPin = async (phone, pinResetToken, pin, confirmPin, url) => {
     setError(null);
     const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/user/reset-web-pin`,
+      `${BACKEND_URL}/api/user/reset-web-pin`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -100,7 +101,7 @@ export const useLogin = () => {
     setError(null);
 
     const response = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/api/user/gLogin`,
+      `${BACKEND_URL}/api/user/gLogin`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuthContext } from "../../hooks/useAuthContext";
 import { formatDeliveryPlace, formatOrderAddress } from "../../utils/orderAddress";
+import { BACKEND_URL } from "@/config";
 
 const AdminOrderDetails = () => {
   const { user } = useAuthContext();
@@ -15,7 +16,7 @@ const AdminOrderDetails = () => {
     try {
       const response = await axios.get(
         `${
-          import.meta.env.VITE_BACKEND_URL
+          BACKEND_URL
         }/api/order/getOrderDetailsByAdmin/${id}`
       );
       setOrderDetails(response.data);
@@ -36,7 +37,7 @@ const AdminOrderDetails = () => {
     try {
       await axios.patch(
         `${
-          import.meta.env.VITE_BACKEND_URL
+          BACKEND_URL
         }/api/order/markAsCompleted/${orderId}`
       );
       fetchOrderDetails(); // Refetch orders after marking one as completed
@@ -47,7 +48,7 @@ const AdminOrderDetails = () => {
   const handleDelete = async (orderId) => {
     try {
       await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/order/deleteOrder/${orderId}`
+        `${BACKEND_URL}/api/order/deleteOrder/${orderId}`
       );
       navigate("/dashboard/admin/receivedOrders");
     } catch (error) {

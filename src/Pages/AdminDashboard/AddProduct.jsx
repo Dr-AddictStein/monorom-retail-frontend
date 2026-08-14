@@ -8,6 +8,7 @@ import RichTextEditor from "../../Components/RichTextEditor";
 import { useAuthContext } from "../../hooks/useAuthContext";
 import { toSlug } from "../../utils/slugify";
 import { uploadFile } from "../../utils/uploadFile";
+import { BACKEND_URL } from "@/config";
 
 const emptyForm = {
   name: "",
@@ -49,7 +50,7 @@ const AddProduct = () => {
   const fetchCategories = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/category/`
+        `${BACKEND_URL}/api/category/`
       );
       if (!response.ok) throw new Error("Failed to fetch categories");
       const data = await response.json();
@@ -154,7 +155,7 @@ const AddProduct = () => {
   const createProduct = async (data) => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/product/`,
+        `${BACKEND_URL}/api/product/`,
         {
           method: "POST",
           headers: {

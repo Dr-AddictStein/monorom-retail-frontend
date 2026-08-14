@@ -3,6 +3,7 @@ import { FaArrowLeft } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useLogin } from "../hooks/useLogin";
 import { useOtpResendCooldown } from "../hooks/useOtpResendCooldown";
+import { BACKEND_URL } from "@/config";
 
 /** @typedef {'login' | 'forgot_phone' | 'forgot_otp' | 'forgot_pin'} LoginMode */
 
@@ -12,7 +13,7 @@ const Login = () => {
     useEffect(() => {
         const fetchSiteData = async () => {
             const response = await fetch(
-                `${import.meta.env.VITE_BACKEND_URL}/api/siteData/getSiteData`
+                `${BACKEND_URL}/api/siteData/getSiteData`
             );
             const data = await response.json();
             setLoginBanner(data.loginBanner);

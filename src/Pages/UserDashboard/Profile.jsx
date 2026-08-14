@@ -5,6 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useAuthContext } from "../../hooks/useAuthContext";
 import { uploadFile } from "../../utils/uploadFile";
 import { Link } from "react-router-dom";
+import { BACKEND_URL } from "@/config";
 
 const Profile = () => {
   const { user } = useAuthContext();
@@ -30,7 +31,7 @@ const Profile = () => {
   const fetchUserData = async () => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/user/getSingleUser/${user?.user?._id
+        `${BACKEND_URL}/api/user/getSingleUser/${user?.user?._id
         }`
       );
       setUserData({
@@ -91,7 +92,7 @@ const Profile = () => {
 
     try {
       await axios.patch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/user/updateUser/${user?.user?._id
+        `${BACKEND_URL}/api/user/updateUser/${user?.user?._id
         }`,
         updatedUserData
       );

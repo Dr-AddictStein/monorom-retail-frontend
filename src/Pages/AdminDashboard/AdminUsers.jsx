@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuthContext } from "../../hooks/useAuthContext";
 import OrderAddress from "../../Components/OrderAddress";
+import { BACKEND_URL } from "@/config";
 
 const Table = ({ data, rowsPerPage }) => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,7 +33,7 @@ const Table = ({ data, rowsPerPage }) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
         await axios.delete(
-          `${import.meta.env.VITE_BACKEND_URL}/api/user/${id}`
+          `${BACKEND_URL}/api/user/${id}`
         );
         window.location.reload();
       } catch (error) {
@@ -45,7 +46,7 @@ const Table = ({ data, rowsPerPage }) => {
   const switchRole = async (id) => {
     try {
       await axios.patch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/user/switchRole/${id}`
+        `${BACKEND_URL}/api/user/switchRole/${id}`
       );
       window.location.reload();
     } catch (error) {
@@ -57,7 +58,7 @@ const Table = ({ data, rowsPerPage }) => {
   const switchPermission = async (id) => {
     try {
       await axios.patch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/user/switchPermission/${id}`
+        `${BACKEND_URL}/api/user/switchPermission/${id}`
       );
       window.location.reload();
     } catch (error) {
@@ -69,7 +70,7 @@ const Table = ({ data, rowsPerPage }) => {
   const handleViewChange = async (id, newView) => {
     try {
       await axios.patch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/user/changeView/${id}`,
+        `${BACKEND_URL}/api/user/changeView/${id}`,
         { view: newView }
       );
       alert("User view updated successfully!");
@@ -268,7 +269,7 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/user/getAllUser`
+        `${BACKEND_URL}/api/user/getAllUser`
       );
       setUsers(response.data.data);
     } catch (error) {

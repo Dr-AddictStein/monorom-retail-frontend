@@ -6,6 +6,7 @@ import AdminGate from "../../Components/AdminGate";
 import RichTextEditor from "../../Components/RichTextEditor";
 import { toSlug } from "../../utils/slugify";
 import { uploadFile } from "../../utils/uploadFile";
+import { BACKEND_URL } from "@/config";
 
 const emptyForm = {
   title: "",
@@ -32,7 +33,7 @@ const AdminBlogEditor = () => {
       try {
         setLoading(true);
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/blog/${id}`
+          `${BACKEND_URL}/api/blog/${id}`
         );
         if (!response.ok) throw new Error("Failed to fetch blog");
         const data = await response.json();
@@ -87,8 +88,8 @@ const AdminBlogEditor = () => {
     try {
       setSaving(true);
       const url = isEdit
-        ? `${import.meta.env.VITE_BACKEND_URL}/api/blog/${id}`
-        : `${import.meta.env.VITE_BACKEND_URL}/api/blog`;
+        ? `${BACKEND_URL}/api/blog/${id}`
+        : `${BACKEND_URL}/api/blog`;
       const response = await fetch(url, {
         method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },

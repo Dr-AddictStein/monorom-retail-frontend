@@ -6,6 +6,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { useLogout } from "../hooks/useLogout";
 import { useCart } from "../context/CartContext";
+import { BACKEND_URL } from "@/config";
 
 const Navbar = () => {
   const { user } = useAuthContext();
@@ -21,7 +22,7 @@ const Navbar = () => {
   const fetchSiteData = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/siteData/getSiteData`
+        `${BACKEND_URL}/api/siteData/getSiteData`
       );
       const data = await response.json();
       setLogo(data.logo);
@@ -33,7 +34,7 @@ const Navbar = () => {
   const fetchUserData = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/user/getSingleUser/${user?.user?._id}`
+        `${BACKEND_URL}/api/user/getSingleUser/${user?.user?._id}`
       );
       const data = await response.json();
       setMainUser(data?.data);
@@ -45,7 +46,7 @@ const Navbar = () => {
   const fetchCategories = async () => {
     try {
       const categoryResponse = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/category/`
+        `${BACKEND_URL}/api/category/`
       );
       const categoriesData = await categoryResponse.json();
       setCategories(categoriesData);

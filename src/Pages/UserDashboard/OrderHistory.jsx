@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
 import { getLocalOrders, saveLocalOrders } from "../../utils/localOrders";
 import OrderAddress from "../../Components/OrderAddress";
+import { BACKEND_URL } from "@/config";
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState(() => getLocalOrders());
@@ -23,7 +24,7 @@ const OrderHistory = () => {
         local.map(async (order) => {
           try {
             const response = await axios.get(
-              `${import.meta.env.VITE_BACKEND_URL}/api/order/getOrderDetailsByAdmin/${order._id}`
+              `${BACKEND_URL}/api/order/getOrderDetailsByAdmin/${order._id}`
             );
             return {
               ...order,

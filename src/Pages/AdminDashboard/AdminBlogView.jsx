@@ -4,6 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AdminGate from "../../Components/AdminGate";
 import { RichTextContent } from "../../Components/RichTextEditor";
+import { BACKEND_URL } from "@/config";
 
 const AdminBlogView = () => {
   const { id } = useParams();
@@ -16,7 +17,7 @@ const AdminBlogView = () => {
       try {
         setLoading(true);
         const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/blog/${id}`
+          `${BACKEND_URL}/api/blog/${id}`
         );
         if (!response.ok) throw new Error("Failed to fetch blog");
         const data = await response.json();
@@ -36,7 +37,7 @@ const AdminBlogView = () => {
     if (!window.confirm("Are you sure you want to delete this blog?")) return;
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/blog/${id}`,
+        `${BACKEND_URL}/api/blog/${id}`,
         { method: "DELETE" }
       );
       if (!response.ok) throw new Error("Failed to delete blog");
