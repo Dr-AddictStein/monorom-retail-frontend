@@ -6,8 +6,8 @@ import "react-toastify/dist/ReactToastify.css";
 import { useAuthContext } from "../../hooks/useAuthContext";
 import { useCart } from "../../context/CartContext";
 import { addLocalOrder } from "../../utils/localOrders";
-import {
 import { BACKEND_URL } from "@/config";
+import {
   composeAddress,
   formatDeliveryPlace,
   getDeliveryCharge,

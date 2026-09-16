@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { FaHome, FaShoppingCart, FaUser } from "react-icons/fa";
 import { ImProfile } from "react-icons/im";
 import { IoCheckmarkDoneCircleOutline, IoChevronDown, IoHome } from "react-icons/io5";
-import {
 import { BACKEND_URL } from "@/config";
+import {
   MdAdd,
   MdArticle,
   MdCallReceived,
