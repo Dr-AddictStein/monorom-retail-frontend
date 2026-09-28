@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import { HiMenuAlt3 } from "react-icons/hi";
+import SeoHead from "./SeoHead";
 
 const DashbaordPage = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -30,6 +31,12 @@ const DashbaordPage = () => {
 
     return (
         <div className="flex h-screen bg-gray-100">
+            <SeoHead
+                title="Dashboard | Monorom"
+                description="Monorom dashboard"
+                path="/dashboard"
+                robots="noindex, nofollow"
+            />
             {/* Mobile Header with Hamburger Menu */}
             <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white shadow-md border-b border-gray-200">
                 <div className="flex items-center justify-between px-4 py-3">

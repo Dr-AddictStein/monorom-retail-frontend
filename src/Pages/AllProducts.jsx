@@ -1,11 +1,17 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import SeoHead from "../Components/SeoHead";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { useCart } from "../context/CartContext";
 import { getProductPrice } from "../utils/productPrice";
+import {
+  itemListJsonLd,
+  pageOrigin,
+  productPath,
+} from "../utils/seoDocument";
 import offerImg from "../../public/offer-removebg-preview.png";
 import outOfStockImg from "../../public/out of stock.png";
 import { BACKEND_URL } from "@/config";
@@ -125,6 +131,17 @@ const AllProducts = () => {
 
   return (
     <div>
+      <SeoHead
+        title="All coffee mugs | Monorom"
+        description="Browse every ceramic coffee mug from Monorom. Compare designs and order online in Bangladesh."
+        path="/allProducts"
+        image={homeBanner}
+        jsonLd={
+          products.length
+            ? [itemListJsonLd("All Monorom coffee mugs", products, pageOrigin(), productPath)]
+            : []
+        }
+      />
       <ToastContainer />
       <div
         className="bg-fixed bg-cover bg-center w-full relative"

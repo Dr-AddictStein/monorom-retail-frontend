@@ -1,2 +1,4 @@
 /api/*  https://monorom-retail-backend.vercel.app/api/:splat  200!
+https://deliymug.com/*  https://monoromstore.com/:splat  301!
+https://www.deliymug.com/*  https://monoromstore.com/:splat  301!
 /*    /index.html   200

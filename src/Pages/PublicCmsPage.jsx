@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet-async";
+import SeoHead from "../Components/SeoHead";
 import { RichTextContent } from "../Components/RichTextEditor";
 import { CMS_PAGES } from "../utils/cmsPages";
+import { cmsSeo } from "../utils/seoDocument";
 import { BACKEND_URL } from "@/config";
 
 const PublicCmsPage = ({ pageKey }) => {
@@ -29,11 +30,16 @@ const PublicCmsPage = ({ pageKey }) => {
     fetchContent();
   }, [pageKey]);
 
+  const seo = cmsSeo(pageKey, content);
+
   return (
     <div className="max-w-4xl mx-auto px-4 pt-40 md:pt-48 pb-12">
-      <Helmet>
-        <title>{page.title} | Monorom</title>
-      </Helmet>
+      <SeoHead
+        title={seo.title}
+        description={seo.description}
+        path={seo.path}
+        robots={seo.robots}
+      />
       <h1 className="text-4xl font-bold mb-8">{page.title}</h1>
       {loading ? (
         <p className="text-gray-500">Loading...</p>

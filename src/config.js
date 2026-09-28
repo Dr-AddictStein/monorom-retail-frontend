@@ -6,7 +6,12 @@
  */
 const fromEnv = (import.meta.env.VITE_BACKEND_URL || "").replace(/\/$/, "");
 
-const hostedShopHosts = new Set(["deliymug.com", "www.deliymug.com"]);
+const hostedShopHosts = new Set([
+  "monoromstore.com",
+  "www.monoromstore.com",
+  "deliymug.com",
+  "www.deliymug.com",
+]);
 
 function resolveBackendUrl() {
   if (typeof window !== "undefined") {

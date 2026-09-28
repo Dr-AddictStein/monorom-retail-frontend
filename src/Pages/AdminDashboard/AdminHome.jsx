@@ -13,6 +13,11 @@ const AdminHome = () => {
   const [homeSmallText, setHomeSmallText] = useState("");
   const [loginBanner, setLoginBanner] = useState("");
   const [signUpBanner, setSignUpBanner] = useState("");
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactAddress, setContactAddress] = useState("");
 
   // Fetch current site data on component mount
   useEffect(() => {
@@ -27,6 +32,11 @@ const AdminHome = () => {
       setHomeSmallText(data.homeSmallText);
       setLoginBanner(data.loginBanner);
       setSignUpBanner(data.signUpBanner);
+      setSeoTitle(data.seoTitle || "");
+      setSeoDescription(data.seoDescription || "");
+      setContactEmail(data.contactEmail || "");
+      setContactPhone(data.contactPhone || "");
+      setContactAddress(data.contactAddress || "");
     };
     fetchSiteData();
   }, []);
@@ -103,6 +113,21 @@ const AdminHome = () => {
       }
     );
     if (response.ok) toast.success("SignUp Banner updated successfully!");
+  };
+
+  const updateHomeSeo = async () => {
+    const response = await fetch(`${BACKEND_URL}/api/siteData/updateHomeSeo`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        seoTitle,
+        seoDescription,
+        contactEmail,
+        contactPhone,
+        contactAddress,
+      }),
+    });
+    if (response.ok) toast.success("SEO and contact details saved");
   };
 
   // Image upload handlers
@@ -282,6 +307,57 @@ const AdminHome = () => {
             className="bg-slate-600 text-white font-semibold px-6 py-2 rounded-md hover:bg-slate-700"
           >
             Save Text
+          </button>
+        </div>
+
+        <div className="bg-gray-100 rounded-lg shadow-lg p-6 md:col-span-2">
+          <h4 className="text-2xl font-semibold mb-2">Homepage SEO and contact</h4>
+          <p className="text-sm text-gray-600 mb-4">
+            The homepage title and description are what Google shows for monoromstore.com.
+            Contact details appear on the public Contact page.
+          </p>
+          <label className="block text-sm font-medium mb-1">SEO title</label>
+          <input
+            value={seoTitle}
+            onChange={(e) => setSeoTitle(e.target.value)}
+            className="w-full p-2 border rounded mb-4 text-gray-700"
+            placeholder="Monorom | Ceramic Coffee Mugs in Bangladesh"
+          />
+          <label className="block text-sm font-medium mb-1">Meta description</label>
+          <textarea
+            value={seoDescription}
+            onChange={(e) => setSeoDescription(e.target.value)}
+            className="w-full p-2 border rounded mb-4 text-gray-700"
+            placeholder="Shop ceramic coffee mugs from Monorom in Bangladesh."
+            rows={3}
+          />
+          <label className="block text-sm font-medium mb-1">Contact email</label>
+          <input
+            value={contactEmail}
+            onChange={(e) => setContactEmail(e.target.value)}
+            className="w-full p-2 border rounded mb-4 text-gray-700"
+            placeholder="hello@monoromstore.com"
+          />
+          <label className="block text-sm font-medium mb-1">Contact phone</label>
+          <input
+            value={contactPhone}
+            onChange={(e) => setContactPhone(e.target.value)}
+            className="w-full p-2 border rounded mb-4 text-gray-700"
+            placeholder="01XXXXXXXXX"
+          />
+          <label className="block text-sm font-medium mb-1">Contact address</label>
+          <textarea
+            value={contactAddress}
+            onChange={(e) => setContactAddress(e.target.value)}
+            className="w-full p-2 border rounded mb-4 text-gray-700"
+            placeholder="Shop address, city, Bangladesh"
+            rows={3}
+          />
+          <button
+            onClick={updateHomeSeo}
+            className="bg-slate-600 text-white font-semibold px-6 py-2 rounded-md hover:bg-slate-700"
+          >
+            Save SEO and contact
           </button>
         </div>
       </div>

@@ -16,6 +16,31 @@
   status = 200
   force = true
 
+# Old shop hostnames on this same Netlify site.
+[[redirects]]
+  from = "https://deliymug.com/*"
+  to = "https://monoromstore.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.deliymug.com/*"
+  to = "https://monoromstore.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://deliymug.com/"
+  to = "https://monoromstore.com/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.deliymug.com/"
+  to = "https://monoromstore.com/"
+  status = 301
+  force = true
+
 # SPA fallback — required so React Router paths work on refresh / direct URL
 [[redirects]]
   from = "/*"

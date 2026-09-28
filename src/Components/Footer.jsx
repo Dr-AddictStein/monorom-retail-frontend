@@ -26,7 +26,7 @@ const Footer = () => {
                 <div className="flex flex-col">
                     <h6 className="footer-title md:font-bold md:text-[16px] text-[14px]">Company</h6>
                     <Link to="/about-us" className="link link-hover">About us</Link>
-                    <Link className="link link-hover">Contact</Link>
+                    <Link to="/contact" className="link link-hover">Contact</Link>
                     <Link to="/blogs" className="link link-hover">Blogs</Link>
                 </div>
                 <div className="flex flex-col">

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { Link, useParams } from "react-router-dom";
+import SeoHead from "../Components/SeoHead";
 import { RichTextContent } from "../Components/RichTextEditor";
-import { stripHtml } from "../utils/slugify";
+import { absoluteUrl, articleJsonLd, blogSeo, pageOrigin } from "../utils/seoDocument";
 import { BACKEND_URL } from "@/config";
 
 const PublicBlogDetails = () => {
@@ -42,18 +42,22 @@ const PublicBlogDetails = () => {
     fetchBlog();
   }, [slug]);
 
-  const metaDescription = blog
-    ? blog.excerpt || stripHtml(blog.content).slice(0, 160)
-    : "";
+  const seo = blogSeo(blog || {});
+  const blogPath = `/blogs/${blog?.slug || slug}`;
 
   return (
     <div className="max-w-4xl mx-auto px-4 pt-40 md:pt-48 pb-12">
-      <Helmet>
-        <title>{blog ? `${blog.title} | Monorom` : "Blog | Monorom"}</title>
-        {metaDescription ? (
-          <meta name="description" content={metaDescription} />
-        ) : null}
-      </Helmet>
+      <SeoHead
+        title={seo.title}
+        description={seo.description}
+        path={blogPath}
+        image={seo.image}
+        ogType="article"
+        robots={
+          notFound ? "noindex, follow" : blog ? seo.robots : "index, follow"
+        }
+        jsonLd={blog && seo.indexable ? [articleJsonLd(blog, absoluteUrl(blogPath, pageOrigin()))] : []}
+      />
 
       <Link to="/blogs" className="text-slate-700 hover:underline inline-block mb-6">
         ← All blogs

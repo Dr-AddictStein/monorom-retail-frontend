@@ -1,14 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import { useAuthContext } from "../hooks/useAuthContext";
-import Restricted from "./Restricted";
-import UnAuthorized from "./UnAuthorized";
+import SeoHead from "../Components/SeoHead";
+import { homeSeo, organizationGraph, pageOrigin } from "../utils/seoDocument";
 import { BACKEND_URL } from "@/config";
 
 const Home = () => {
-  const { user } = useAuthContext();
-
   const [allData, setAllData] = useState([]);
   const [topData, setTopData] = useState([]);
 
@@ -16,6 +13,11 @@ const Home = () => {
   const [homeBanner, setHomeBanner] = useState("");
   const [homeSlogan, setHomeSlogan] = useState("");
   const [homeSmallText, setHomeSmallText] = useState("");
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactAddress, setContactAddress] = useState("");
   // Fetch current site data on component mount
   useEffect(() => {
     const fetchSiteData = async () => {
@@ -27,6 +29,11 @@ const Home = () => {
       setHomeBanner(data.homeBanner);
       setHomeSlogan(data.homeSlogan);
       setHomeSmallText(data.homeSmallText);
+      setSeoTitle(data.seoTitle || "");
+      setSeoDescription(data.seoDescription || "");
+      setContactEmail(data.contactEmail || "");
+      setContactPhone(data.contactPhone || "");
+      setContactAddress(data.contactAddress || "");
     };
     fetchSiteData();
   }, []);
@@ -101,9 +108,11 @@ const Home = () => {
       >
         {/* Category Title — left aligned, no underline */}
         <div className="pb-6 md:pb-8">
-          <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-left text-gray-800">
-            {allData[index]?.name}
-          </h3>
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-left text-gray-800">
+            <Link to={`/category/${item?.slug || item?._id}`} className="hover:text-gray-600">
+              {allData[index]?.name}
+            </Link>
+          </h2>
         </div>
 
         {/* Product grid — 2 rows of 4 on desktop; 2 cols on mobile */}
@@ -157,8 +166,27 @@ const Home = () => {
     );
   };
 
+  const seo = homeSeo({
+    seoTitle,
+    seoDescription,
+    homeBanner,
+    logo,
+  });
+
   return (
     <div className="relative">
+      <SeoHead
+        title={seo.title}
+        description={seo.description}
+        path="/"
+        image={seo.image}
+        jsonLd={[
+          organizationGraph(
+            { logo, contactEmail, contactPhone, contactAddress },
+            pageOrigin()
+          ),
+        ]}
+      />
       {/* Background Image */}
       <div
         className={`bg-fixed bg-cover bg-center w-full relative`}
@@ -174,9 +202,9 @@ const Home = () => {
       </div>
 
       <div className="bg-white md:p-20 py-12">
-        <h1 className="text-center font-sans font-semibold text-3xl md:text-6xl pb-10">
+        <h2 className="text-center font-sans font-semibold text-3xl md:text-6xl pb-10">
           Our Top Categories
-        </h1>
+        </h2>
         <div className="relative max-w-[1700px] mx-auto px-4 md:px-8">
           {/* Left Arrow */}
           <button
@@ -214,7 +242,7 @@ const Home = () => {
               />
               <div className="absolute inset-0 z-50 bg-black bg-opacity-50 flex flex-col justify-center items-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">
                 <h3 className="text-white text-2xl font-bold my-6">
-                  {item.name}
+                  <Link to={`/category/${item.slug || item._id}`}>{item.name}</Link>
                 </h3>
                 <button
                   className="px-4 py-2 border border-white text-white hover:bg-white hover:text-black transition-colors duration-300"
@@ -225,7 +253,7 @@ const Home = () => {
               </div>
               <div className="absolute inset-0 flex flex-col justify-center items-center opacity-100 transition-opacity duration-500 group-hover:opacity-0">
                 <h3 className="text-white bg-black bg-opacity-70 text-3xl font-bold w-56 text-center py-2">
-                  {item.name}
+                  <Link to={`/category/${item.slug || item._id}`}>{item.name}</Link>
                 </h3>
               </div>
             </div>

@@ -32,6 +32,7 @@ import AdminBlogView from "../Pages/AdminDashboard/AdminBlogView";
 import PublicCmsPage from "../Pages/PublicCmsPage";
 import PublicBlogs from "../Pages/PublicBlogs";
 import PublicBlogDetails from "../Pages/PublicBlogDetails";
+import PublicContact from "../Pages/PublicContact";
 
 export const router = createBrowserRouter([
     {
@@ -85,6 +86,10 @@ export const router = createBrowserRouter([
             {
                 path: "/blogs/:slug",
                 element: <PublicBlogDetails />,
+            },
+            {
+                path: "/contact",
+                element: <PublicContact />,
             },
             {
                 path: "/user/cart",

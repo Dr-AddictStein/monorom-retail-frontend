@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
+import SeoHead from "../Components/SeoHead";
 import { stripHtml } from "../utils/slugify";
+import { blogSeo, itemListJsonLd, pageOrigin } from "../utils/seoDocument";
 import { BACKEND_URL } from "@/config";
 
 const PublicBlogs = () => {
@@ -28,11 +29,27 @@ const PublicBlogs = () => {
     fetchBlogs();
   }, []);
 
+  const indexableBlogs = blogs.filter((blog) => blogSeo(blog).indexable);
+
   return (
     <div className="max-w-6xl mx-auto px-4 pt-40 md:pt-48 pb-12">
-      <Helmet>
-        <title>Blogs | Monorom</title>
-      </Helmet>
+      <SeoHead
+        title="Blogs | Monorom"
+        description="Guides and stories from Monorom about ceramic coffee mugs in Bangladesh."
+        path="/blogs"
+        jsonLd={
+          indexableBlogs.length
+            ? [
+                itemListJsonLd(
+                  "Monorom blog",
+                  indexableBlogs.map((blog) => ({ ...blog, name: blog.title })),
+                  pageOrigin(),
+                  (blog) => `/blogs/${blog.slug || blog._id}`
+                ),
+              ]
+            : []
+        }
+      />
       <h1 className="text-4xl font-bold mb-8">Blogs</h1>
 
       {loading ? (
