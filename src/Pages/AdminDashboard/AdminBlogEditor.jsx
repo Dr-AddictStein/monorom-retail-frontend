@@ -4,6 +4,12 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AdminGate from "../../Components/AdminGate";
 import RichTextEditor from "../../Components/RichTextEditor";
+import SlugFieldError from "../../Components/SlugFieldError";
+import {
+  findExistingBySlug,
+  readApiError,
+  slugConflictMessage,
+} from "../../utils/apiError";
 import { toSlug } from "../../utils/slugify";
 import { uploadFile } from "../../utils/uploadFile";
 import { BACKEND_URL } from "@/config";
@@ -25,6 +31,7 @@ const AdminBlogEditor = () => {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [slugTouched, setSlugTouched] = useState(false);
+  const [slugError, setSlugError] = useState("");
 
   useEffect(() => {
     if (!isEdit) return;
@@ -58,6 +65,7 @@ const AdminBlogEditor = () => {
   }, [id, isEdit]);
 
   const handleTitleChange = (title) => {
+    setSlugError("");
     setFormData((prev) => ({
       ...prev,
       title,
@@ -85,6 +93,23 @@ const AdminBlogEditor = () => {
       return;
     }
 
+    const slug = formData.slug || toSlug(formData.title);
+    if (slug) {
+      const existing = await findExistingBySlug(
+        `${BACKEND_URL}/api/blog/${encodeURIComponent(slug)}`
+      );
+      if (existing && String(existing._id) !== String(id || "")) {
+        const message = slugConflictMessage(
+          "blog",
+          existing.title,
+          existing.slug || slug
+        );
+        setSlugError(message);
+        toast.error(message);
+        return;
+      }
+    }
+
     try {
       setSaving(true);
       const url = isEdit
@@ -96,9 +121,14 @@ const AdminBlogEditor = () => {
         body: JSON.stringify(formData),
       });
       if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.message || "Failed to save blog");
+        const { message, code } = await readApiError(
+          response,
+          "Failed to save blog"
+        );
+        if (code === "SLUG_CONFLICT") setSlugError(message);
+        throw new Error(message);
       }
+      setSlugError("");
       const saved = await response.json();
       toast.success(isEdit ? "Blog updated!" : "Blog created!");
       navigate(`/dashboard/admin/blogs/${saved._id}`);
@@ -151,11 +181,14 @@ const AdminBlogEditor = () => {
                 value={formData.slug}
                 onChange={(e) => {
                   setSlugTouched(true);
-                  setFormData((prev) => ({ ...prev, slug: e.target.value }));
+                  setSlugError("");
+                  setFormData((prev) => ({ ...prev, slug: toSlug(e.target.value) }));
                 }}
-                className="w-full p-2 border rounded text-gray-700"
+                className={`w-full p-2 border rounded text-gray-700 ${slugError ? "border-red-500" : ""}`}
                 placeholder="blog-url-slug"
+                aria-invalid={slugError ? "true" : "false"}
               />
+              <SlugFieldError message={slugError} />
             </div>
 
             <div>

@@ -5,7 +5,13 @@ import "react-toastify/dist/ReactToastify.css";
 import Switch from "react-switch";
 import ProductSeoFields from "../../Components/ProductSeoFields";
 import RichTextEditor from "../../Components/RichTextEditor";
+import SlugFieldError from "../../Components/SlugFieldError";
 import { useAuthContext } from "../../hooks/useAuthContext";
+import {
+  findExistingBySlug,
+  readApiError,
+  slugConflictMessage,
+} from "../../utils/apiError";
 import { getProductPrice } from "../../utils/productPrice";
 import { toSlug } from "../../utils/slugify";
 import { uploadFile } from "../../utils/uploadFile";
@@ -44,6 +50,7 @@ const EditProduct = () => {
   });
   const [categories, setCategories] = useState([]);
   const [productLoaded, setProductLoaded] = useState(false);
+  const [slugError, setSlugError] = useState("");
 
   useEffect(() => {
     fetchCategories();
@@ -126,12 +133,14 @@ const EditProduct = () => {
         setPreview({ ...preview, productThumbnail: URL.createObjectURL(file) });
       }
     } else if (name === "name") {
+      setSlugError("");
       setFormData((prev) => ({
         ...prev,
         name: value,
         slug: toSlug(value),
       }));
     } else if (name === "slug") {
+      setSlugError("");
       setFormData((prev) => ({ ...prev, slug: toSlug(value) }));
     } else {
       setFormData({ ...formData, [name]: value });
@@ -177,6 +186,23 @@ const EditProduct = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const slug = formData.slug || toSlug(formData.name);
+    if (slug) {
+      const existing = await findExistingBySlug(
+        `${BACKEND_URL}/api/product/${encodeURIComponent(slug)}`
+      );
+      if (existing && String(existing._id) !== String(id)) {
+        const message = slugConflictMessage(
+          "product",
+          existing.name,
+          existing.slug || slug
+        );
+        setSlugError(message);
+        toast.error(message);
+        return;
+      }
+    }
 
     // Only upload newly selected File objects; keep existing URL strings as-is
     const bannerImagePath =
@@ -251,7 +277,16 @@ const EditProduct = () => {
           body: JSON.stringify(data),
         }
       );
-      if (!response.ok) throw new Error("Failed to update product");
+      if (!response.ok) {
+        const { message, code } = await readApiError(
+          response,
+          "Failed to update product"
+        );
+        if (code === "SLUG_CONFLICT") setSlugError(message);
+        toast.error(message);
+        return;
+      }
+      setSlugError("");
       toast.success("Product updated successfully!");
       navigate(`/dashboard/admin/viewProduct/${id}`);
     } catch (error) {
@@ -326,12 +361,14 @@ const EditProduct = () => {
             name="slug"
             value={formData.slug}
             onChange={handleInputChange}
-            className="input input-bordered w-full"
+            className={`input input-bordered w-full ${slugError ? "input-error" : ""}`}
             placeholder="auto-generated-from-product-name"
+            aria-invalid={slugError ? "true" : "false"}
           />
           <p className="text-xs text-base-content/50 mt-1">
             Used in URL: /productDetails/{formData.slug || "your-slug"}
           </p>
+          <SlugFieldError message={slugError} />
         </div>
         <div>
           <label className="label">

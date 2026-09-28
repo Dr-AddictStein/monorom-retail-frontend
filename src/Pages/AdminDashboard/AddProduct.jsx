@@ -5,7 +5,13 @@ import "react-toastify/dist/ReactToastify.css";
 import Switch from "react-switch";
 import ProductSeoFields from "../../Components/ProductSeoFields";
 import RichTextEditor from "../../Components/RichTextEditor";
+import SlugFieldError from "../../Components/SlugFieldError";
 import { useAuthContext } from "../../hooks/useAuthContext";
+import {
+  findExistingBySlug,
+  readApiError,
+  slugConflictMessage,
+} from "../../utils/apiError";
 import { toSlug } from "../../utils/slugify";
 import { uploadFile } from "../../utils/uploadFile";
 import { BACKEND_URL } from "@/config";
@@ -42,6 +48,7 @@ const AddProduct = () => {
     galleryImages: [],
   });
   const [categories, setCategories] = useState([]);
+  const [slugError, setSlugError] = useState("");
 
   useEffect(() => {
     fetchCategories();
@@ -71,12 +78,14 @@ const AddProduct = () => {
         setPreview({ ...preview, productThumbnail: URL.createObjectURL(file) });
       }
     } else if (name === "name") {
+      setSlugError("");
       setFormData((prev) => ({
         ...prev,
         name: value,
         slug: toSlug(value),
       }));
     } else if (name === "slug") {
+      setSlugError("");
       setFormData((prev) => ({ ...prev, slug: toSlug(value) }));
     } else {
       setFormData({ ...formData, [name]: value });
@@ -120,6 +129,23 @@ const AddProduct = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const slug = formData.slug || toSlug(formData.name);
+    if (slug) {
+      const existing = await findExistingBySlug(
+        `${BACKEND_URL}/api/product/${encodeURIComponent(slug)}`
+      );
+      if (existing) {
+        const message = slugConflictMessage(
+          "product",
+          existing.name,
+          existing.slug || slug
+        );
+        setSlugError(message);
+        toast.error(message);
+        return;
+      }
+    }
+
     const bannerImagePath = await uploadFile(formData.bannerImage);
     const productThumbnailPath = await uploadFile(formData.productThumbnail);
     const galleryImagePaths = await Promise.all(
@@ -164,7 +190,16 @@ const AddProduct = () => {
           body: JSON.stringify(data),
         }
       );
-      if (!response.ok) throw new Error("Failed to add product");
+      if (!response.ok) {
+        const { message, code } = await readApiError(
+          response,
+          "Failed to add product"
+        );
+        if (code === "SLUG_CONFLICT") setSlugError(message);
+        toast.error(message);
+        return;
+      }
+      setSlugError("");
       toast.success("Product added successfully!");
       setFormData(emptyForm);
       setPreview({
@@ -236,12 +271,14 @@ const AddProduct = () => {
             name="slug"
             value={formData.slug}
             onChange={handleInputChange}
-            className="input input-bordered w-full"
+            className={`input input-bordered w-full ${slugError ? "input-error" : ""}`}
             placeholder="auto-generated-from-product-name"
+            aria-invalid={slugError ? "true" : "false"}
           />
           <p className="text-xs text-base-content/50 mt-1">
             Used in URL: /productDetails/{formData.slug || "your-slug"}
           </p>
+          <SlugFieldError message={slugError} />
         </div>
         <div>
           <label className="label">

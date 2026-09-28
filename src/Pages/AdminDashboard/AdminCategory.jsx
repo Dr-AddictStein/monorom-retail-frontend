@@ -4,7 +4,13 @@ import { RiDeleteBin6Line } from "react-icons/ri";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ProductSeoFields from "../../Components/ProductSeoFields";
+import SlugFieldError from "../../Components/SlugFieldError";
 import { useAuthContext } from "../../hooks/useAuthContext";
+import {
+  findExistingBySlug,
+  readApiError,
+  slugConflictMessage,
+} from "../../utils/apiError";
 import { uploadFile } from "../../utils/uploadFile";
 import { Link } from "react-router-dom";
 import { BACKEND_URL } from "@/config";
@@ -36,6 +42,7 @@ const AdminCategory = () => {
   const [seoCategoryId, setSeoCategoryId] = useState(null);
   const [seoForm, setSeoForm] = useState(emptySeoForm);
   const [seoSaving, setSeoSaving] = useState(false);
+  const [slugError, setSlugError] = useState("");
 
   useEffect(() => {
     fetchCategories();
@@ -69,6 +76,7 @@ const AdminCategory = () => {
       setFormData({ ...formData, [name]: file });
       setPreview({ ...preview, [name]: URL.createObjectURL(file) });
     } else if (name === "name") {
+      setSlugError("");
       // Auto-fill slug from name only while creating (not editing)
       setFormData((prev) => ({
         ...prev,
@@ -76,6 +84,7 @@ const AdminCategory = () => {
         slug: editCategoryId ? prev.slug : toSlugPreview(value),
       }));
     } else if (name === "slug") {
+      setSlugError("");
       setFormData({ ...formData, slug: toSlugPreview(value) });
     } else {
       setFormData({ ...formData, [name]: value });
@@ -84,6 +93,23 @@ const AdminCategory = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const slug = formData.slug || toSlugPreview(formData.name);
+    if (slug) {
+      const existing = await findExistingBySlug(
+        `${BACKEND_URL}/api/category/${encodeURIComponent(slug)}`
+      );
+      if (existing && String(existing._id) !== String(editCategoryId || "")) {
+        const message = slugConflictMessage(
+          "category",
+          existing.name,
+          existing.slug || slug
+        );
+        setSlugError(message);
+        toast.error(message);
+        return;
+      }
+    }
+
     let bannerImagePath = "";
     let thumbnailPath = "";
 
@@ -114,14 +140,11 @@ const AdminCategory = () => {
       categoryThumbnail: thumbnailPath,
     };
 
-    if (editCategoryId) {
-      await updateCategory(editCategoryId, categoryData);
-    } else {
-      await createCategory(categoryData);
-    }
+    const saved = editCategoryId
+      ? await updateCategory(editCategoryId, categoryData)
+      : await createCategory(categoryData);
 
-    // Reset form data and close modal
-    resetForm();
+    if (saved) resetForm();
   };
 
   const createCategory = async (data) => {
@@ -136,13 +159,24 @@ const AdminCategory = () => {
           body: JSON.stringify(data),
         }
       );
-      if (!response.ok) throw new Error("Failed to add category");
+      if (!response.ok) {
+        const { message, code } = await readApiError(
+          response,
+          "Failed to add category"
+        );
+        if (code === "SLUG_CONFLICT") setSlugError(message);
+        toast.error(message);
+        return false;
+      }
+      setSlugError("");
       toast.success("Category added successfully!");
       fetchCategories();
       document.getElementById("category_modal").close();
+      return true;
     } catch (error) {
       console.error("Error adding category:", error);
       toast.error("Error adding category. Please try again.");
+      return false;
     }
   };
 
@@ -158,17 +192,29 @@ const AdminCategory = () => {
           body: JSON.stringify(data),
         }
       );
-      if (!response.ok) throw new Error("Failed to update category");
+      if (!response.ok) {
+        const { message, code } = await readApiError(
+          response,
+          "Failed to update category"
+        );
+        if (code === "SLUG_CONFLICT") setSlugError(message);
+        toast.error(message);
+        return false;
+      }
+      setSlugError("");
       toast.success("Category updated successfully!");
       fetchCategories();
       document.getElementById("category_modal").close();
+      return true;
     } catch (error) {
       console.error("Error updating category:", error);
       toast.error("Error updating category. Please try again.");
+      return false;
     }
   };
 
   const handleEdit = (category) => {
+    setSlugError("");
     setEditCategoryId(category._id);
     setFormData({
       name: category.name,
@@ -265,6 +311,7 @@ const AdminCategory = () => {
       categoryThumbnail: null,
     });
     setEditCategoryId(null);
+    setSlugError("");
   };
   const { user } = useAuthContext();
 
@@ -337,15 +384,17 @@ const AdminCategory = () => {
                   name="slug"
                   value={formData.slug}
                   onChange={handleInputChange}
-                  className="input input-bordered w-full"
+                  className={`input input-bordered w-full ${slugError ? "input-error" : ""}`}
                   placeholder="e.g. living-room"
                   required
+                  aria-invalid={slugError ? "true" : "false"}
                 />
                 <label className="label">
                   <span className="label-text-alt text-gray-500">
                     Used in URL: /category/{formData.slug || "your-slug"}
                   </span>
                 </label>
+                <SlugFieldError message={slugError} />
               </div>
               <div className="form-control">
                 <label className="label">
