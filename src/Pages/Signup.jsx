@@ -168,7 +168,7 @@ const Signup = () => {
                             <FaArrowLeft /> Back to home
                         </Link>
                     </p>
-                    <div className="text-center mx-auto lg:px-40 px-12 h-screen">
+                    <div className="text-center mx-auto lg:px-40 px-12 pb-16">
                         <div className="flex flex-col justify-center items-center w-full">
 
                             {signupFlow === 'otp' && otpPanel({
