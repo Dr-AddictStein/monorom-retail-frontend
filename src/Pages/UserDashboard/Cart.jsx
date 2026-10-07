@@ -277,6 +277,12 @@ const Cart = () => {
       addLocalOrder(savedOrder);
       clear();
 
+      if (savedOrder.emailSent === false) {
+        toast.error(
+          savedOrder.emailError ||
+            "Order placed, but the admin email could not be sent."
+        );
+      }
       toast.success("Order placed successfully!");
       setIsConfirmOpen(false);
       setOrderDetails(emptyOrderDetails);
